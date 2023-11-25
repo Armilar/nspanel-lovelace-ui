@@ -329,13 +329,13 @@ let Debug: boolean = false;
 
 /******************************** End CONFIG Parameter ********************************/
 
-//-- DE: Anfang der Beispiele für Seitengestaltung -- z.T. selbstdefinierte Aliase erforderlich ---------
-//-- EN: Beginning of examples for page design     -- some self-defined aliases required ----------------
+//-- Anfang für eigene Seiten -- z.T. selbstdefinierte Aliase erforderlich ----------------
+//-- Start for your own pages -- some self-defined aliases required ----------------
   
 	//-- https://github.com/joBr99/nspanel-lovelace-ui/wiki/NSPanel-Page-%E2%80%90-Typen_How-2_Beispiele
 
-//-- ENDE der Beispiele für Seitengestaltung -- Selbstdefinierte Aliase erforderlich -----------
-//-- END of page design examples             -- Self-defined aliases required ------------------
+//-- ENDE für eigene Seiten -- z.T. selbstdefinierte Aliase erforderlich -------------------------
+//-- END for your own pages -- some self-defined aliases required ------------------------
 
 
 /***********************************************************************************************
