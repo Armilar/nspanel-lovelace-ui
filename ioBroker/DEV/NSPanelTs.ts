@@ -125,6 +125,7 @@ ReleaseNotes:
         - 13.09.2024 - v4.4.0.4  New Feature: Hidden Carts
         - 18.09.2024 - v4.4.0.5  Remove day.JS
 	- 19.09.2024 - v4.4.0.6  Check Ports with mqtt.X and mqtt-client.X
+        - 27.09.2024 - v4.4.0.6  Fix: Using MQTT adapter or MQTT-CLIENT adapter / Minor Fix by wolwin
 
         Todo:
         - XX.12.2024 - v5.0.0    ioBroker Adapter
@@ -994,7 +995,7 @@ export const config: Config = {
 // _________________________________ DE: Ab hier keine Konfiguration mehr _____________________________________
 // _________________________________ EN:  No more configuration from here _____________________________________
 
-const scriptVersion: string = 'v4.4.0.5';
+const scriptVersion: string = 'v4.4.0.6';
 const tft_version: string = 'v4.4.0';
 const desired_display_firmware_version = 53;
 const berry_driver_version = 9;
@@ -1071,7 +1072,7 @@ async function CheckConfigParameters() {
             const a = n.shift();
             const i = n.shift();
 
-            if (a === 'mqtt' && !isNaN(Number(i))) {
+            if (a.substring(0, 4) === 'mqtt' && !isNaN(Number(i))) {
                 sendTo(`${a}.${i}`, 'sendMessage2Client', { topic: n.join('/'), message: buildNSPanelString('time', '12:00') });
                 await sleep(500);
             }
@@ -3517,6 +3518,9 @@ async function SendToPanel(val: NSPanel.Payload | NSPanel.Payload[]) {
             });
         } else {
             setIfExists(config.panelSendTopic, val.payload);
+            if (Debug) {
+                log('function SendToPanel val-payload: ' + val.payload, 'info');
+            }
         }
     } catch (err: any) {
         log('error at function SendToPanel: ' + err.message, 'warn');
