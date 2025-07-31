@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------------
-TypeScript v4.7.5.1 zur Steuerung des SONOFF NSPanel mit dem ioBroker by @Armilar / @TT-Tom / @ticaki / @Britzelpuf / @Sternmiere / @ravenS0ne
-- abgestimmt auf TFT 56 / v4.7.5 / BerryDriver 9 / Tasmota 15.0.1
+TypeScript v4.9.3.1 zur Steuerung des SONOFF NSPanel mit dem ioBroker by @Armilar / @TT-Tom / @ticaki / @Britzelpuf / @Sternmiere / @ravenS0ne
+- abgestimmt auf TFT 58 / v4.9.3 / BerryDriver 9 / Tasmota 15.0.1
 @joBr99 Projekt: https://github.com/joBr99/nspanel-lovelace-ui/tree/main/ioBroker
 NsPanelTs.ts (dieses TypeScript in ioBroker) Stable: https://github.com/joBr99/nspanel-lovelace-ui/blob/main/ioBroker/NsPanelTs.ts
 icon_mapping.ts: https://github.com/joBr99/nspanel-lovelace-ui/blob/main/ioBroker/icon_mapping.ts (TypeScript muss in global liegen)
@@ -70,12 +70,17 @@ ReleaseNotes:
         - 24.06.2025 - v4.7.4.1  Refactoring popupShutter (split into shutter/shutter2)
         - 25.06.2025 - v4.7.5    TFT 56 / 4.7.5 - Refactoring popupLight2 (light/light2) --> EU + US-P
         - 25.06.2025 - v4.7.5.1  Add popupLight2 (split into light/light2)
-	- 26.06.2025 - v4.7.5    TFT 56 / 4.7.5 - Refactoring popupLight2 (light/light2) --> US-L
-       
-       
-        Todo:
-        - XX.12.2024 - v5.0.0    ioBroker Adapter
-
+        - 26.06.2025 - v4.7.5    TFT 56 / 4.7.5 - Refactoring popupLight2 (light/light2) --> US-L
+        - 30.06.2025 - v4.8.0    TFT 57 / 4.8.0 - Stable - Fix popupShutter2 (eu/us-l/us-p)
+        - 30.06.2025 - v4.9.0    TFT 58 / 4.9.0 - Beta - Adapter & Script (eu/us-l/us-p)
+        - 30.06.2025 - v4.9.0.1  Small Fixes
+        - 24.07.2025 - v4.9.1    Adapter Changes
+        - 24.07.2025 - v4.9.2.1  Add icon2 Parameter to Info Alias Channels
+        - 25.07.2025 - v4.9.2.2  Add OpenWeatherMap (AccuWeather deprecated)
+	- 28.07.2025 - v4.9.2.3  Quick-Fix Errors with TypeScript in JS > 9.X (by ticaki)
+ 	- 30.07.2025 - v4.9.3    TFT 58 / 4.9.3
+        - 30.07.2025 - v4.9.3.1  popupShutter2 Changes (new Parameter shutterZeroIsClosed changing Direction of %-Value in HMI (0 <--> 100))
+	
 ***************************************************************************************************************
 * DE: Für die Erstellung der Aliase durch das Skript, muss in der JavaScript Instanz "setObject" gesetzt sein! *
 * EN: In order for the script to create the aliases, “setObject” must be set in the JavaScript instance!       *
@@ -165,20 +170,21 @@ Tasmota-Status0 - (zyklische Ausführung)
 
 Erforderliche Adapter:
 
-    AccuWeather oder DasWetter: - Bei Nutzung der Wetterfunktionen (und zur Icon-Konvertierung) im Screensaver
-    Alexa2:                     - Bei Nutzung der dynamischen SpeakerList in der cardMedia
-    Geräte verwalten            - Für Erstellung der Aliase
-    MQTT-Adapter                - Für Kommunikation zwischen Skript und Tasmota
+    OpenWeatherMap oder DasWetter: - Bei Nutzung der Wetterfunktionen (und zur Icon-Konvertierung) im Screensaver
+    !!!AccuWeather deprecated      - Dienst schaltet Free-Account ab!!!
+    Alexa2:                        - Bei Nutzung der dynamischen SpeakerList in der cardMedia
+    Geräte verwalten               - Für Erstellung der Aliase
+    MQTT-Adapter                   - Für Kommunikation zwischen Skript und Tasmota
     JavaScript-Adapter
 
 Install/Upgrades in Konsole:
 
     Tasmota BerryDriver Install: Backlog UrlFetch https://raw.githubusercontent.com/joBr99/nspanel-lovelace-ui/main/tasmota/autoexec.be; Restart 1
     Tasmota BerryDriver Update:  Backlog UpdateDriverVersion https://raw.githubusercontent.com/joBr99/nspanel-lovelace-ui/main/tasmota/autoexec.be; Restart 1
-    TFT EU STABLE Version:       FlashNextion http://nspanel.de/nspanel-v4.7.5.tft
+    TFT EU STABLE Version:       FlashNextion http://nspanel.de/nspanel-v4.9.3.tft
 
-    TFT US-L STABLE Version:     FlashNextion http://nspanel.de/nspanel-us-l-v4.7.5.tft
-    TFT US-P STABLE Version:     FlashNextion http://nspanel.de/nspanel-us-p-v4.7.1.tft
+    TFT US-L STABLE Version:     FlashNextion http://nspanel.de/nspanel-us-l-v4.9.0.tft
+    TFT US-P STABLE Version:     FlashNextion http://nspanel.de/nspanel-us-p-v4.9.0.tft
 ---------------------------------------------------------------------------------------
 */
 
@@ -225,9 +231,9 @@ const NSPanel_Alarm_Path = '0_userdata.0.NSPanel.';
 
 /***** 3. Weather adapter Config *****/
 
-// DE: Mögliche Wetteradapter 'accuweather.0.' oder 'daswetter.0.'
-// EN: Possible weather adapters 'accuweather.0.' or 'the weather.0.'
-const weatherAdapterInstance: string = 'accuweather.0.';
+// DE: Mögliche Wetteradapter 'openweathermap.0.' oder 'daswetter.0.' oder 'accuweather.0.' (deprecated)
+// EN: Possible weather adapters 'openweathermap.0.' or 'daswetter.0.' or 'accuweather.0.' (deprecated)
+const weatherAdapterInstance: string = 'openweathermap.0.';
 
 // DE: Mögliche Werte: 'Min', 'Max' oder 'MinMax' im Screensaver
 // EN: Possible values: 'Min', 'Max' or 'MinMax' in the screensaver
@@ -235,7 +241,7 @@ const weatherScreensaverTempMinMax: string = 'MinMax';
 
 // DE: Dieser Alias wird automatisch für den gewählten Wetter erstellt und kann entsprechend angepasst werden
 // EN: This alias is automatically created for the selected weather and can be adjusted accordingly
-const weatherEntityPath: string = 'alias.0.Wetter';
+const weatherEntityPath: string = 'alias.0.OWMWetter';
 
 
 /***** 4. Color constants for use in the PageItems *****/
@@ -819,22 +825,22 @@ export const config: Config = {
     ],
 
     bottomScreensaverEntity: [
+
         // bottomScreensaverEntity 1
         {
-            ScreensaverEntity: 'accuweather.0.Daily.Day1.Sunrise',
+            ScreensaverEntity: 'openweathermap.0.forecast.current.pressure',
             ScreensaverEntityFactor: 1,
             ScreensaverEntityDecimalPlaces: 0,
-            ScreensaverEntityDateFormat: {hour: '2-digit', minute: '2-digit'}, // Description at Wiki-Pages
-            ScreensaverEntityIconOn: 'weather-sunset-up',
+            ScreensaverEntityIconOn: 'gauge',
             ScreensaverEntityIconOff: null,
-            ScreensaverEntityText: 'Sonne',
-            ScreensaverEntityUnitText: '%',
-            ScreensaverEntityIconColor: MSYellow //{'val_min': 0, 'val_max': 100}
+            ScreensaverEntityText: 'Druck',
+            ScreensaverEntityUnitText: 'hPa',
+            ScreensaverEntityIconColor: {'val_min': 950, 'val_max': 1050, 'val_best': 1013}
         },
         // bottomScreensaverEntity 2
         {
-            ScreensaverEntity: 'accuweather.0.Current.WindSpeed',
-            ScreensaverEntityFactor: (1000 / 3600),
+            ScreensaverEntity: 'openweathermap.0.forecast.current.windSpeed',
+            ScreensaverEntityFactor: 1,
             ScreensaverEntityDecimalPlaces: 1,
             ScreensaverEntityIconOn: 'weather-windy',
             ScreensaverEntityIconOff: null,
@@ -844,8 +850,8 @@ export const config: Config = {
         },
         // bottomScreensaverEntity 3
         {
-            ScreensaverEntity: 'accuweather.0.Current.WindGust',
-            ScreensaverEntityFactor: (1000 / 3600),
+            ScreensaverEntity: 'openweathermap.0.forecast.current.windGust',
+            ScreensaverEntityFactor: 1,
             ScreensaverEntityDecimalPlaces: 1,
             ScreensaverEntityIconOn: 'weather-tornado',
             ScreensaverEntityIconOff: null,
@@ -853,20 +859,21 @@ export const config: Config = {
             ScreensaverEntityUnitText: 'm/s',
             ScreensaverEntityIconColor: {'val_min': 0, 'val_max': 120}
         },
+
         // bottomScreensaverEntity 4
         {
-            ScreensaverEntity: 'accuweather.0.Current.WindDirectionText',
+            ScreensaverEntity: 'openweathermap.0.forecast.current.clouds',
             ScreensaverEntityFactor: 1,
             ScreensaverEntityDecimalPlaces: 0,
-            ScreensaverEntityIconOn: 'windsock',
+            ScreensaverEntityIconOn: 'weather-cloudy',
             ScreensaverEntityIconOff: null,
-            ScreensaverEntityText: 'Windr.',
-            ScreensaverEntityUnitText: '°',
-            ScreensaverEntityIconColor: White
+            ScreensaverEntityText: 'Wolken',
+            ScreensaverEntityUnitText: '%',
+            ScreensaverEntityIconColor: {'val_min': 0, 'val_max': 100}
         },
         // bottomScreensaverEntity 5 (for Alternative and Advanced Screensaver)
         {
-            ScreensaverEntity: 'accuweather.0.Current.RelativeHumidity',
+            ScreensaverEntity: 'openweathermap.0.forecast.current.humidity',
             ScreensaverEntityFactor: 1,
             ScreensaverEntityDecimalPlaces: 1,
             ScreensaverEntityIconOn: 'water-percent',
@@ -884,8 +891,8 @@ export const config: Config = {
             ScreensaverEntityOffColor: White,
             ScreensaverEntityOnText: 'Is ON',
             ScreensaverEntityOffText: 'Not ON'
-        },
-        // Examples for Advanced-Screensaver: https://github.com/joBr99/nspanel-lovelace-ui/wiki/ioBroker-Config-Screensaver#entity-status-icons-ab-v400 
+        },        
+	// Examples for Advanced-Screensaver: https://github.com/joBr99/nspanel-lovelace-ui/wiki/ioBroker-Config-Screensaver#entity-status-icons-ab-v400 
     ],
 
     indicatorScreensaverEntity: [
@@ -961,9 +968,9 @@ export const config: Config = {
 // _________________________________ DE: Ab hier keine Konfiguration mehr _____________________________________
 // _________________________________ EN:  No more configuration from here _____________________________________
 
-const scriptVersion: string = 'v4.7.5.1';
-const tft_version: string = 'v4.7.5';
-const desired_display_firmware_version = 56;
+const scriptVersion: string = 'v4.9.3.1';
+const tft_version: string = 'v4.9.3';
+const desired_display_firmware_version = 58;
 const berry_driver_version = 9;
 
 const tasmotaOtaUrl: string = 'http://ota.tasmota.com/tasmota32/release/';
@@ -1076,6 +1083,11 @@ async function CheckConfigParameters () {
                 log('Weather adapter: << weatherAdapterInstance - ' + weatherAdapterInstance + ' >> is not installed. Please Check Adapter!', 'error');
             }
         }
+        if (weatherAdapterInstance.substring(0, weatherAdapterInstance.length - 3) == 'openweathermap') {
+            if (existsObject(weatherAdapterInstance + 'forecast.current.icon') == false) {
+                log('Weather adapter: << weatherAdapterInstance - ' + weatherAdapterInstance + ' >> is not installed. Please Check Adapter!', 'error');
+            }
+        }
 
         let weatherAdapterInstanceArray: any = weatherAdapterInstance.split('.');
         weatherAdapterInstanceNumber = weatherAdapterInstanceArray[1];
@@ -1089,7 +1101,7 @@ async function CheckConfigParameters () {
                 if (common.name == 'javascript') {
                     javaScriptVersion = common.version;
                     setIfExists(NSPanel_Path + 'IoBroker.JavaScriptVersion', 'v' + javaScriptVersion, null, true);
-                    setIfExists(NSPanel_Path + 'IoBroker.ScriptName', (name as unknown as string).split('.').slice(2).join('.'), null, true);
+                    setIfExists(NSPanel_Path + 'IoBroker.ScriptName', scriptName.split('.').slice(2).join('.'), null, true);
                     let jsVersion = common.version.split('.');
                     let jsV = 10 * parseInt(jsVersion[0]) + parseInt(jsVersion[1]);
                     if (jsV < 61) log('JS-Adapter: ' + common.name + ' must be at least v6.1.3. Currently: v' + common.version, 'error');
@@ -1141,15 +1153,15 @@ async function InitIoBrokerInfo () {
             // Script Version
             await createStateAsync(NSPanel_Path + 'IoBroker.ScriptVersion', scriptVersion, {type: 'string', write: false});
             setObject(AliasPath + 'IoBroker.ScriptVersion', {type: 'channel', common: {role: 'info', name: 'Version NSPanelTS'}, native: {}});
-            await createAliasAsync(AliasPath + 'IoBroker.ScriptVersion.ACTUAL', NSPanel_Path + 'IoBroker.ScriptVersion', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
+            await createAliasAsync(AliasPath + 'IoBroker.ScriptVersion.ACTUAL', NSPanel_Path + 'IoBroker.ScriptVersion', true, {type: 'string', role: 'state', name: 'ACTUAL'});
             // NodeJS Verion
             await createStateAsync(NSPanel_Path + 'IoBroker.NodeJSVersion', 'v' + nodeVersion, {type: 'string', write: false});
             setObject(AliasPath + 'IoBroker.NodeJSVersion', {type: 'channel', common: {role: 'info', name: 'Version NodeJS'}, native: {}});
-            await createAliasAsync(AliasPath + 'IoBroker.NodeJSVersion.ACTUAL', NSPanel_Path + 'IoBroker.NodeJSVersion', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
+            await createAliasAsync(AliasPath + 'IoBroker.NodeJSVersion.ACTUAL', NSPanel_Path + 'IoBroker.NodeJSVersion', true, {type: 'string', role: 'state', name: 'ACTUAL'});
             // JavaScript Version
             await createStateAsync(NSPanel_Path + 'IoBroker.JavaScriptVersion', 'v' + javaScriptVersion, {type: 'string', write: false});
             setObject(AliasPath + 'IoBroker.JavaScriptVersion', {type: 'channel', common: {role: 'info', name: 'Version JavaScript Instanz'}, native: {}});
-            await createAliasAsync(AliasPath + 'IoBroker.JavaScriptVersion.ACTUAL', NSPanel_Path + 'IoBroker.JavaScriptVersion', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'IoBroker.JavaScriptVersion.ACTUAL', NSPanel_Path + 'IoBroker.JavaScriptVersion', true, {
                 type: 'string',
                 role: 'state',
                 name: 'ACTUAL',
@@ -1157,7 +1169,7 @@ async function InitIoBrokerInfo () {
             // ScriptName
             await createStateAsync(NSPanel_Path + 'IoBroker.ScriptName', 'v' + NSPanel_Path + 'IoBroker.ScriptName', {type: 'string', write: false});
             setObject(AliasPath + 'IoBroker.ScriptName', {type: 'channel', common: {role: 'info', name: 'Scriptname'}, native: {}});
-            await createAliasAsync(AliasPath + 'IoBroker.ScriptName.ACTUAL', NSPanel_Path + 'IoBroker.ScriptName', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
+            await createAliasAsync(AliasPath + 'IoBroker.ScriptName.ACTUAL', NSPanel_Path + 'IoBroker.ScriptName', true, {type: 'string', role: 'state', name: 'ACTUAL'});
         }
         setIfExists(NSPanel_Path + 'IoBroker.ScriptVersion', scriptVersion, null, true);
     } catch (err: any) {
@@ -1180,12 +1192,12 @@ async function CheckDebugMode () {
         if (isSetOptionActive) {
             await createStateAsync(NSPanel_Path + 'Config.ScripgtDebugStatus', false, {type: 'boolean', write: true});
             setObject(AliasPath + 'Config.ScripgtDebugStatus', {type: 'channel', common: {role: 'socket', name: 'ScripgtDebugStatus'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.ScripgtDebugStatus.ACTUAL', NSPanel_Path + 'Config.ScripgtDebugStatus', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.ScripgtDebugStatus.ACTUAL', NSPanel_Path + 'Config.ScripgtDebugStatus', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'Config.ScripgtDebugStatus.SET', NSPanel_Path + 'Config.ScripgtDebugStatus', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'SET'});
+            await createAliasAsync(AliasPath + 'Config.ScripgtDebugStatus.SET', NSPanel_Path + 'Config.ScripgtDebugStatus', true, {type: 'boolean', role: 'switch', name: 'SET'});
         }
 
         if (getState(NSPanel_Path + 'Config.ScripgtDebugStatus').val) {
@@ -1213,8 +1225,8 @@ async function CheckMQTTPorts () {
         if (isSetOptionActive) {
             await createStateAsync(NSPanel_Path + 'Config.MQTT.portCheck', true, {type: 'boolean', write: true});
             setObject(AliasPath + 'Config.MQTT.portCheck', {type: 'channel', common: {role: 'socket', name: 'mqttPortCheck'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.MQTT.portCheck.ACTUAL', NSPanel_Path + 'Config.MQTT.portCheck', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'ACTUAL'});
-            await createAliasAsync(AliasPath + 'Config.MQTT.portCheck.SET', NSPanel_Path + 'Config.MQTT.portCheck', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'SET'});
+            await createAliasAsync(AliasPath + 'Config.MQTT.portCheck.ACTUAL', NSPanel_Path + 'Config.MQTT.portCheck', true, {type: 'boolean', role: 'switch', name: 'ACTUAL'});
+            await createAliasAsync(AliasPath + 'Config.MQTT.portCheck.SET', NSPanel_Path + 'Config.MQTT.portCheck', true, {type: 'boolean', role: 'switch', name: 'SET'});
         }
 
         if (getState(NSPanel_Path + 'Config.MQTT.portCheck').val) {
@@ -1305,12 +1317,12 @@ async function Init_Release () {
                 await createStateAsync(NSPanel_Path + 'Display_Firmware.TFT.desiredVersion', String(desired_display_firmware_version), {type: 'string', write: false});
                 setObject(AliasPath + 'Display_Firmware.TFT.currentVersion', {type: 'channel', common: {role: 'info', name: 'current TFT-Version'}, native: {}});
                 setObject(AliasPath + 'Display_Firmware.TFT.desiredVersion', {type: 'channel', common: {role: 'info', name: 'desired TFT-Version'}, native: {}});
-                await createAliasAsync(AliasPath + 'Display_Firmware.TFT.currentVersion.ACTUAL', NSPanel_Path + 'Display_Firmware.TFT.currentVersion', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Display_Firmware.TFT.currentVersion.ACTUAL', NSPanel_Path + 'Display_Firmware.TFT.currentVersion', true, {
                     type: 'string',
                     role: 'state',
                     name: 'ACTUAL',
                 });
-                await createAliasAsync(AliasPath + 'Display_Firmware.TFT.desiredVersion.ACTUAL', NSPanel_Path + 'Display_Firmware.TFT.desiredVersion', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Display_Firmware.TFT.desiredVersion.ACTUAL', NSPanel_Path + 'Display_Firmware.TFT.desiredVersion', true, {
                     type: 'string',
                     role: 'state',
                     name: 'ACTUAL',
@@ -1348,12 +1360,12 @@ async function InitConfigParameters () {
             // alternativeScreensaverLayout (socket)
             await createStateAsync(NSPanel_Path + 'Config.Screensaver.alternativeScreensaverLayout', false, {type: 'boolean', write: true});
             setObject(AliasPath + 'Config.Screensaver.alternativeScreensaverLayout', {type: 'channel', common: {role: 'socket', name: 'alternativeScreensaverLayout'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.Screensaver.alternativeScreensaverLayout.ACTUAL', NSPanel_Path + 'Config.Screensaver.alternativeScreensaverLayout', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.Screensaver.alternativeScreensaverLayout.ACTUAL', NSPanel_Path + 'Config.Screensaver.alternativeScreensaverLayout', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'Config.Screensaver.alternativeScreensaverLayout.SET', NSPanel_Path + 'Config.Screensaver.alternativeScreensaverLayout', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.Screensaver.alternativeScreensaverLayout.SET', NSPanel_Path + 'Config.Screensaver.alternativeScreensaverLayout', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
@@ -1361,12 +1373,12 @@ async function InitConfigParameters () {
 
             await createStateAsync(`${NSPanel_Path}${ScreensaverAdvancedEndPath}`, false, {type: 'boolean', write: true});
             setObject(AliasPath + ScreensaverAdvancedEndPath, {type: 'channel', common: {role: 'socket', name: 'ScreensaverAdvanced'}, native: {}});
-            await createAliasAsync(`${AliasPath}${ScreensaverAdvancedEndPath}.ACTUAL`, `${NSPanel_Path}${ScreensaverAdvancedEndPath}`, true, <iobJS.StateCommon> {
+            await createAliasAsync(`${AliasPath}${ScreensaverAdvancedEndPath}.ACTUAL`, `${NSPanel_Path}${ScreensaverAdvancedEndPath}`, true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(`${AliasPath}${ScreensaverAdvancedEndPath}.SET`, `${NSPanel_Path}${ScreensaverAdvancedEndPath}`, true, <iobJS.StateCommon> {
+            await createAliasAsync(`${AliasPath}${ScreensaverAdvancedEndPath}.SET`, `${NSPanel_Path}${ScreensaverAdvancedEndPath}`, true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
@@ -1374,12 +1386,12 @@ async function InitConfigParameters () {
 
             await createStateAsync(NSPanel_Path + ScreensaverEasyViewEndPath, false, {type: 'boolean', write: true});
             setObject(AliasPath + ScreensaverEasyViewEndPath, {type: 'channel', common: {role: 'socket', name: 'Easy-View Screensaver'}, native: {}});
-            await createAliasAsync(`${AliasPath}${ScreensaverEasyViewEndPath}.ACTUAL`, NSPanel_Path + ScreensaverEasyViewEndPath, true, <iobJS.StateCommon> {
+            await createAliasAsync(`${AliasPath}${ScreensaverEasyViewEndPath}.ACTUAL`, NSPanel_Path + ScreensaverEasyViewEndPath, true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(`${AliasPath}${ScreensaverEasyViewEndPath}.SET`, NSPanel_Path + ScreensaverEasyViewEndPath, true, <iobJS.StateCommon> {
+            await createAliasAsync(`${AliasPath}${ScreensaverEasyViewEndPath}.SET`, NSPanel_Path + ScreensaverEasyViewEndPath, true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
@@ -1398,12 +1410,12 @@ async function InitConfigParameters () {
             // timeoutScreensaver 0-60 (Slider)
             await createStateAsync(NSPanel_Path + 'Config.Screensaver.timeoutScreensaver', 10, {type: 'number', write: true});
             setObject(AliasPath + 'Config.Screensaver.timeoutScreensaver', {type: 'channel', common: {role: 'slider', name: 'timeoutScreensaver'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.Screensaver.timeoutScreensaver.ACTUAL', NSPanel_Path + 'Config.Screensaver.timeoutScreensaver', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.Screensaver.timeoutScreensaver.ACTUAL', NSPanel_Path + 'Config.Screensaver.timeoutScreensaver', true, {
                 type: 'number',
                 role: 'value',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'Config.Screensaver.timeoutScreensaver.SET', NSPanel_Path + 'Config.Screensaver.timeoutScreensaver', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.Screensaver.timeoutScreensaver.SET', NSPanel_Path + 'Config.Screensaver.timeoutScreensaver', true, {
                 type: 'number',
                 role: 'level',
                 name: 'SET',
@@ -1412,12 +1424,12 @@ async function InitConfigParameters () {
             // screenSaverDoubleClick (socket)
             await createStateAsync(NSPanel_Path + 'Config.Screensaver.screenSaverDoubleClick', true, {type: 'boolean', write: true});
             setObject(AliasPath + 'Config.Screensaver.screenSaverDoubleClick', {type: 'channel', common: {role: 'socket', name: 'screenSaverDoubleClick'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.Screensaver.screenSaverDoubleClick.ACTUAL', NSPanel_Path + 'Config.Screensaver.screenSaverDoubleClick', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.Screensaver.screenSaverDoubleClick.ACTUAL', NSPanel_Path + 'Config.Screensaver.screenSaverDoubleClick', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'Config.Screensaver.screenSaverDoubleClick.SET', NSPanel_Path + 'Config.Screensaver.screenSaverDoubleClick', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.Screensaver.screenSaverDoubleClick.SET', NSPanel_Path + 'Config.Screensaver.screenSaverDoubleClick', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
@@ -1438,13 +1450,13 @@ async function InitConfigParameters () {
             if (existsObject(NSPanel_Path + 'Config.localeNumber') == false) {
                 await createStateAsync(NSPanel_Path + 'Config.localeNumber', 1, {type: 'number', write: true});
                 setObject(AliasPath + 'Config.localeNumber', {type: 'channel', common: {role: 'buttonSensor', name: 'localeNumber'}, native: {}});
-                await createAliasAsync(AliasPath + 'Config.localeNumber.VALUE', NSPanel_Path + 'Config.localeNumber', true, <iobJS.StateCommon> {type: 'number', role: 'state', name: 'VALUE'});
+                await createAliasAsync(AliasPath + 'Config.localeNumber.VALUE', NSPanel_Path + 'Config.localeNumber', true, {type: 'number', role: 'state', name: 'VALUE'});
             }
             // temperatureUnit popupInSel buttonSensor
             if (existsObject(NSPanel_Path + 'Config.temperatureUnitNumber') == false) {
                 await createStateAsync(NSPanel_Path + 'Config.temperatureUnitNumber', 0, {type: 'number', write: true});
                 setObject(AliasPath + 'Config.temperatureUnitNumber', {type: 'channel', common: {role: 'buttonSensor', name: 'temperatureUnitNumber'}, native: {}});
-                await createAliasAsync(AliasPath + 'Config.temperatureUnitNumber.VALUE', NSPanel_Path + 'Config.temperatureUnitNumber', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.temperatureUnitNumber.VALUE', NSPanel_Path + 'Config.temperatureUnitNumber', true, {
                     type: 'number',
                     role: 'state',
                     name: 'VALUE',
@@ -1454,12 +1466,12 @@ async function InitConfigParameters () {
             if (existsObject(NSPanel_Path + 'Config.hiddenCards') == false) {
                 await createStateAsync(NSPanel_Path + 'Config.hiddenCards', false, {type: 'boolean', write: true});
                 setObject(AliasPath + 'Config.hiddenCards', {type: 'channel', common: {role: 'socket', name: 'hiddenCards'}, native: {}});
-                await createAliasAsync(AliasPath + 'Config.hiddenCards.ACTUAL', NSPanel_Path + 'Config.hiddenCards', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.hiddenCards.ACTUAL', NSPanel_Path + 'Config.hiddenCards', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'ACTUAL',
                 });
-                await createAliasAsync(AliasPath + 'Config.hiddenCards.SET', NSPanel_Path + 'Config.hiddenCards', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.hiddenCards.SET', NSPanel_Path + 'Config.hiddenCards', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'SET',
@@ -1831,12 +1843,12 @@ async function InitActiveBrightness () {
             }
             //Create Alias activeBrightness
             setObject(AliasPath + 'ScreensaverInfo.activeBrightness', {type: 'channel', common: {role: 'slider', name: 'activeBrightness'}, native: {}});
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.activeBrightness.ACTUAL', NSPanel_Path + 'ScreensaverInfo.activeBrightness', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.activeBrightness.ACTUAL', NSPanel_Path + 'ScreensaverInfo.activeBrightness', true, {
                 type: 'number',
                 role: 'value',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.activeBrightness.SET', NSPanel_Path + 'ScreensaverInfo.activeBrightness', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.activeBrightness.SET', NSPanel_Path + 'ScreensaverInfo.activeBrightness', true, {
                 type: 'number',
                 role: 'level',
                 name: 'SET',
@@ -1968,7 +1980,7 @@ async function InitRebootPanel () {
         if (existsState(NSPanel_Path + 'Config.rebootNSPanel') == false) {
             await createStateAsync(NSPanel_Path + 'Config.rebootNSPanel', false, {type: 'boolean', write: true});
             setObject(AliasPath + 'Config.rebootNSPanel', {type: 'channel', common: {role: 'button', name: 'Reboot NSPanel'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.rebootNSPanel.SET', NSPanel_Path + 'Config.rebootNSPanel', true, <iobJS.StateCommon> {type: 'boolean', role: 'state', name: 'SET'});
+            await createAliasAsync(AliasPath + 'Config.rebootNSPanel.SET', NSPanel_Path + 'Config.rebootNSPanel', true, {type: 'boolean', role: 'state', name: 'SET'});
         }
     } catch (err: any) {
         log('error at function InitRebootPanel: ' + err.message, 'warn');
@@ -2002,7 +2014,7 @@ on({id: AliasPath + 'Config.rebootNSPanel.SET', change: 'any'}, async function (
                         SendToPanel({payload: 'pageType~pageStartup'});
                         log('Tasmota Reboot', 'info');
                         setStateAsync(AliasPath + 'Config.rebootNSPanel.SET', false);
-                        log('Name: ' + name, 'info');
+                        log('Name: ' + scriptName, 'info');
                         log('Instanz: ' + instance, 'info');
                     } else {
                         log('Axios Status - Requesting locales: ' + response.state, 'warn');
@@ -2063,17 +2075,17 @@ async function InitUpdateDatapoints () {
                 setObject(AliasPath + 'Config.Update.UpdateTasmota', {type: 'channel', common: {role: 'button', name: 'Tassmota update'}, native: {}});
                 setObject(AliasPath + 'Config.Update.UpdateBerry', {type: 'channel', common: {role: 'button', name: 'Berry-Driver update'}, native: {}});
                 setObject(AliasPath + 'Config.Update.UpdateNextion', {type: 'channel', common: {role: 'button', name: 'Nextion TFT update'}, native: {}});
-                await createAliasAsync(AliasPath + 'Config.Update.UpdateTasmota.SET', NSPanel_Path + 'Config.Update.UpdateTasmota', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Update.UpdateTasmota.SET', NSPanel_Path + 'Config.Update.UpdateTasmota', true, {
                     type: 'boolean',
                     role: 'state',
                     name: 'SET',
                 });
-                await createAliasAsync(AliasPath + 'Config.Update.UpdateBerry.SET', NSPanel_Path + 'Config.Update.UpdateBerry', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Update.UpdateBerry.SET', NSPanel_Path + 'Config.Update.UpdateBerry', true, {
                     type: 'boolean',
                     role: 'state',
                     name: 'SET',
                 });
-                await createAliasAsync(AliasPath + 'Config.Update.UpdateNextion.SET', NSPanel_Path + 'Config.Update.UpdateNextion', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Update.UpdateNextion.SET', NSPanel_Path + 'Config.Update.UpdateNextion', true, {
                     type: 'boolean',
                     role: 'state',
                     name: 'SET',
@@ -2142,12 +2154,12 @@ async function Init_Relays () {
                 await createStateAsync(NSPanel_Path + 'Relay.2', true, {type: 'boolean', write: true});
             }
             setObject(AliasPath + 'Relay.1', {type: 'channel', common: {role: 'socket', name: 'Relay.1'}, native: {}});
-            await createAliasAsync(AliasPath + 'Relay.1.ACTUAL', NSPanel_Path + 'Relay.1', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'ACTUAL'});
-            await createAliasAsync(AliasPath + 'Relay.1.SET', NSPanel_Path + 'Relay.1', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'SET'});
+            await createAliasAsync(AliasPath + 'Relay.1.ACTUAL', NSPanel_Path + 'Relay.1', true, {type: 'boolean', role: 'switch', name: 'ACTUAL'});
+            await createAliasAsync(AliasPath + 'Relay.1.SET', NSPanel_Path + 'Relay.1', true, {type: 'boolean', role: 'switch', name: 'SET'});
             //Create Alias alternateMRIconSize 2
             setObject(AliasPath + 'Relay.2', {type: 'channel', common: {role: 'socket', name: 'Relay.2'}, native: {}});
-            await createAliasAsync(AliasPath + 'Relay.2.ACTUAL', NSPanel_Path + 'Relay.2', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'ACTUAL'});
-            await createAliasAsync(AliasPath + 'Relay.2.SET', NSPanel_Path + 'Relay.2', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'SET'});
+            await createAliasAsync(AliasPath + 'Relay.2.ACTUAL', NSPanel_Path + 'Relay.2', true, {type: 'boolean', role: 'switch', name: 'ACTUAL'});
+            await createAliasAsync(AliasPath + 'Relay.2.SET', NSPanel_Path + 'Relay.2', true, {type: 'boolean', role: 'switch', name: 'SET'});
         }
     } catch (err: any) {
         log('error at function Init_Relays: ' + err.message, 'warn');
@@ -2179,24 +2191,24 @@ async function InitAlternateMRIconsSize () {
             }
             //Create Alias alternateMRIconSize 1
             setObject(AliasPath + 'Config.MRIcons.alternateMRIconSize.1', {type: 'channel', common: {role: 'socket', name: 'alternateMRIconSize.1'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.1.ACTUAL', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.1', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.1.ACTUAL', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.1', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.1.SET', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.1', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.1.SET', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.1', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
             });
             //Create Alias alternateMRIconSize 2
             setObject(AliasPath + 'Config.MRIcons.alternateMRIconSize.2', {type: 'channel', common: {role: 'socket', name: 'alternateMRIconSize.2'}, native: {}});
-            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.2.ACTUAL', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.2', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.2.ACTUAL', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.2', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.2.SET', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.2', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'Config.MRIcons.alternateMRIconSize.2.SET', NSPanel_Path + 'Config.MRIcons.alternateMRIconSize.2', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
@@ -2229,23 +2241,23 @@ async function InitDateformat () {
                 await createStateAsync(NSPanel_Path + 'Config.Dateformat.Switch.weekday', true, {type: 'boolean', write: true});
                 await createStateAsync(NSPanel_Path + 'Config.Dateformat.Switch.month', true, {type: 'boolean', write: true});
                 setObject(AliasPath + 'Config.Dateformat.Switch.weekday', {type: 'channel', common: {role: 'socket', name: 'Dateformat Switch weekday'}, native: {}});
-                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.weekday.ACTUAL', NSPanel_Path + 'Config.Dateformat.Switch.weekday', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.weekday.ACTUAL', NSPanel_Path + 'Config.Dateformat.Switch.weekday', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'ACTUAL',
                 });
-                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.weekday.SET', NSPanel_Path + 'Config.Dateformat.Switch.weekday', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.weekday.SET', NSPanel_Path + 'Config.Dateformat.Switch.weekday', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'SET',
                 });
                 setObject(AliasPath + 'Config.Dateformat.Switch.month', {type: 'channel', common: {role: 'socket', name: 'Dateformat Switch month'}, native: {}});
-                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.month.ACTUAL', NSPanel_Path + 'Config.Dateformat.Switch.month', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.month.ACTUAL', NSPanel_Path + 'Config.Dateformat.Switch.month', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'ACTUAL',
                 });
-                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.month.SET', NSPanel_Path + 'Config.Dateformat.Switch.month', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Dateformat.Switch.month.SET', NSPanel_Path + 'Config.Dateformat.Switch.month', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'SET',
@@ -2430,22 +2442,22 @@ async function CreateWeatherAlias () {
                         if (!existsState(config.weatherEntity + '.ICON') && existsState('accuweather.' + weatherAdapterInstanceNumber + '.Current.WeatherIcon')) {
                             log('Weather alias for accuweather.' + weatherAdapterInstanceNumber + '. does not exist yet, will be created now', 'info');
                             setObject(config.weatherEntity, {_id: config.weatherEntity, type: 'channel', common: {role: 'weatherCurrent', name: 'media'}, native: {}});
-                            await createAliasAsync(config.weatherEntity + '.ICON', 'accuweather.' + weatherAdapterInstanceNumber + '.Current.WeatherIcon', true, <iobJS.StateCommon> {
+                            await createAliasAsync(config.weatherEntity + '.ICON', 'accuweather.' + weatherAdapterInstanceNumber + '.Current.WeatherIcon', true, {
                                 type: 'number',
                                 role: 'value',
                                 name: 'ICON',
                             });
-                            await createAliasAsync(config.weatherEntity + '.TEMP', 'accuweather.' + weatherAdapterInstanceNumber + '.Current.Temperature', true, <iobJS.StateCommon> {
+                            await createAliasAsync(config.weatherEntity + '.TEMP', 'accuweather.' + weatherAdapterInstanceNumber + '.Current.Temperature', true, {
                                 type: 'number',
                                 role: 'value.temperature',
                                 name: 'TEMP',
                             });
-                            await createAliasAsync(config.weatherEntity + '.TEMP_MIN', 'accuweather.' + weatherAdapterInstanceNumber + '.Daily.Day1.Temperature.Minimum', true, <iobJS.StateCommon> {
+                            await createAliasAsync(config.weatherEntity + '.TEMP_MIN', 'accuweather.' + weatherAdapterInstanceNumber + '.Daily.Day1.Temperature.Minimum', true, {
                                 type: 'number',
                                 role: 'value.temperature.forecast.0',
                                 name: 'TEMP_MIN',
                             });
-                            await createAliasAsync(config.weatherEntity + '.TEMP_MAX', 'accuweather.' + weatherAdapterInstanceNumber + '.Daily.Day1.Temperature.Maximum', true, <iobJS.StateCommon> {
+                            await createAliasAsync(config.weatherEntity + '.TEMP_MAX', 'accuweather.' + weatherAdapterInstanceNumber + '.Daily.Day1.Temperature.Maximum', true, {
                                 type: 'number',
                                 role: 'value.temperature.max.forecast.0',
                                 name: 'TEMP_MAX',
@@ -2456,6 +2468,43 @@ async function CreateWeatherAlias () {
                     }
                 } catch (err: any) {
                     log('error at function CreateWeatherAlias accuweather.' + weatherAdapterInstanceNumber + '.: ' + err.message, 'warn');
+                }
+            } else if (weatherAdapterInstance == 'openweathermap.' + weatherAdapterInstanceNumber + '.') {
+                try {
+                    if (isSetOptionActive) {
+                        if (!existsState(config.weatherEntity + '.ICON') && existsState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.icon')) {
+                            log('Weather alias for openweathermap.' + weatherAdapterInstanceNumber + '. does not exist yet, will be created now', 'info');
+                            setObject(config.weatherEntity, {_id: config.weatherEntity, type: 'channel', common: {role: 'weatherCurrent', name: 'media'}, native: {}});
+                            await createAliasAsync(config.weatherEntity + '.ICON', ('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.icon'), true, {
+                                type: 'string',
+                                role: 'value',
+                                name: 'ICON',
+                                alias: {id: 'openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.icon', read: '(val.split("/").pop()).split(".").shift()'},
+                            });
+                            await createAliasAsync(config.weatherEntity + '.TEMP', 'openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.temperature', true, {
+                                type: 'number',
+                                role: 'value.temperature',
+                                name: 'TEMP',
+                                alias: {id: 'openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.temperature', read: 'Math.round(val*10)/10'},
+                            });
+                            await createAliasAsync(config.weatherEntity + '.TEMP_MIN', 'openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.temperatureMin', true, {
+                                type: 'number',
+                                role: 'value.temperature.forecast.0',
+                                name: 'TEMP_MIN',
+                                alias: {id: 'openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.temperatureMin', read: 'Math.round(val)'},
+                            });
+                            await createAliasAsync(config.weatherEntity + '.TEMP_MAX', 'openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.temperatureMax', true, {
+                                type: 'number',
+                                role: 'value.temperature.max.forecast.0',
+                                name: 'TEMP_MAX',
+                                alias: {id: 'openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.temperatureMax', read: 'Math.round(val)'},
+                            });
+                        } else {
+                            log('weather alias for openweathermap.' + weatherAdapterInstanceNumber + '. already exists', 'info');
+                        }
+                    }
+                } catch (err: any) {
+                    log('error at function CreateWeatherAlias openweathermap.' + weatherAdapterInstanceNumber + '.: ' + err.message, 'warn');
                 }
             }
         }
@@ -2476,8 +2525,8 @@ CreateWeatherAlias();
 async function InitPageNavi () {
     try {
         if (!existsState(NSPanel_Path + 'PageNavi')) {
-            await createStateAsync(NSPanel_Path + 'PageNavi', <iobJS.StateCommon> {type: 'string', write: true});
-            await setStateAsync(NSPanel_Path + 'PageNavi', <iobJS.State> {val: "{ pagetype: 'page', pageId: 0 }", ack: true});
+            await createStateAsync(NSPanel_Path + 'PageNavi', {type: 'string', write: true});
+            await setStateAsync(NSPanel_Path + 'PageNavi', {val: "{ pagetype: 'page', pageId: 0 }", ack: true});
         }
     } catch (err: any) {
         log('error at function InitPageNavi: ' + err.message, 'warn');
@@ -2585,36 +2634,36 @@ async function InitWeatherForecast () {
             }
             //Create Alias weatherForecast
             setObject(AliasPath + 'ScreensaverInfo.weatherForecast', {type: 'channel', common: {role: 'socket', name: 'weatherForecast'}, native: {}});
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecast.ACTUAL', NSPanel_Path + 'ScreensaverInfo.weatherForecast', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecast.ACTUAL', NSPanel_Path + 'ScreensaverInfo.weatherForecast', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecast.SET', NSPanel_Path + 'ScreensaverInfo.weatherForecast', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecast.SET', NSPanel_Path + 'ScreensaverInfo.weatherForecast', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
             });
             //Create Alias weatherForecastTimer
             setObject(AliasPath + 'ScreensaverInfo.weatherForecastTimer', {type: 'channel', common: {role: 'socket', name: 'weatherForecastTimer'}, native: {}});
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecastTimer.ACTUAL', NSPanel_Path + 'ScreensaverInfo.weatherForecastTimer', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecastTimer.ACTUAL', NSPanel_Path + 'ScreensaverInfo.weatherForecastTimer', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecastTimer.SET', NSPanel_Path + 'ScreensaverInfo.weatherForecastTimer', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.weatherForecastTimer.SET', NSPanel_Path + 'ScreensaverInfo.weatherForecastTimer', true, {
                 type: 'boolean',
                 role: 'switch',
                 name: 'SET',
             });
             //Create Alias entityChangeTime
             setObject(AliasPath + 'ScreensaverInfo.entityChangeTime', {type: 'channel', common: {role: 'slider', name: 'entityChangeTime'}, native: {}});
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.entityChangeTime.ACTUAL', NSPanel_Path + 'ScreensaverInfo.entityChangeTime', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.entityChangeTime.ACTUAL', NSPanel_Path + 'ScreensaverInfo.entityChangeTime', true, {
                 type: 'number',
                 role: 'value',
                 name: 'ACTUAL',
             });
-            await createAliasAsync(AliasPath + 'ScreensaverInfo.entityChangeTime.SET', NSPanel_Path + 'ScreensaverInfo.entityChangeTime', true, <iobJS.StateCommon> {
+            await createAliasAsync(AliasPath + 'ScreensaverInfo.entityChangeTime.SET', NSPanel_Path + 'ScreensaverInfo.entityChangeTime', true, {
                 type: 'number',
                 role: 'level',
                 name: 'SET',
@@ -2640,48 +2689,48 @@ async function InitDimmode () {
         if (isSetOptionActive) {
             // Screensaver on dark at night ("brightnessNight: e.g. 2") or off ("brightnessNight:0")
             if (!existsState(NSPanel_Path + 'NSPanel_Dimmode_brightnessDay')) {
-                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', <iobJS.StateCommon> {type: 'number', write: true});
-                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', <iobJS.State> {val: 8, ack: true});
+                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', {type: 'number', write: true});
+                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', {val: 8, ack: true});
                 setObject(AliasPath + 'Dimmode.brightnessDay', {type: 'channel', common: {role: 'slider', name: 'brightnessDay'}, native: {}});
-                await createAliasAsync(AliasPath + 'Dimmode.brightnessDay.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Dimmode.brightnessDay.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', true, {
                     type: 'number',
                     role: 'value',
                     name: 'ACTUAL',
                 });
-                await createAliasAsync(AliasPath + 'Dimmode.brightnessDay.SET', NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Dimmode.brightnessDay.SET', NSPanel_Path + 'NSPanel_Dimmode_brightnessDay', true, {
                     type: 'number',
                     role: 'level',
                     name: 'SET',
                 });
             }
             if (!existsState(NSPanel_Path + 'NSPanel_Dimmode_hourDay')) {
-                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourDay', <iobJS.StateCommon> {type: 'number', write: true});
-                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourDay', <iobJS.State> {val: 7, ack: true});
+                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourDay', {type: 'number', write: true});
+                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourDay', {val: 7, ack: true});
                 setObject(AliasPath + 'Dimmode.hourDay', {type: 'channel', common: {role: 'slider', name: 'hourDay'}, native: {}});
-                await createAliasAsync(AliasPath + 'Dimmode.hourDay.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_hourDay', true, <iobJS.StateCommon> {type: 'number', role: 'value', name: 'ACTUAL'});
-                await createAliasAsync(AliasPath + 'Dimmode.hourDay.SET', NSPanel_Path + 'NSPanel_Dimmode_hourDay', true, <iobJS.StateCommon> {type: 'number', role: 'level', name: 'SET'});
+                await createAliasAsync(AliasPath + 'Dimmode.hourDay.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_hourDay', true, {type: 'number', role: 'value', name: 'ACTUAL'});
+                await createAliasAsync(AliasPath + 'Dimmode.hourDay.SET', NSPanel_Path + 'NSPanel_Dimmode_hourDay', true, {type: 'number', role: 'level', name: 'SET'});
             }
             if (!existsState(NSPanel_Path + 'NSPanel_Dimmode_brightnessNight')) {
-                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', <iobJS.StateCommon> {type: 'number', write: true});
-                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', <iobJS.State> {val: 1, ack: true});
+                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', {type: 'number', write: true});
+                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', {val: 1, ack: true});
                 setObject(AliasPath + 'Dimmode.brightnessNight', {type: 'channel', common: {role: 'slider', name: 'brightnessNight'}, native: {}});
-                await createAliasAsync(AliasPath + 'Dimmode.brightnessNight.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Dimmode.brightnessNight.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', true, {
                     type: 'number',
                     role: 'value',
                     name: 'ACTUAL',
                 });
-                await createAliasAsync(AliasPath + 'Dimmode.brightnessNight.SET', NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Dimmode.brightnessNight.SET', NSPanel_Path + 'NSPanel_Dimmode_brightnessNight', true, {
                     type: 'number',
                     role: 'level',
                     name: 'SET',
                 });
             }
             if (!existsState(NSPanel_Path + 'NSPanel_Dimmode_hourNight')) {
-                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourNight', <iobJS.StateCommon> {type: 'number', write: true});
-                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourNight', <iobJS.State> {val: 22, ack: true});
+                await createStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourNight', {type: 'number', write: true});
+                await setStateAsync(NSPanel_Path + 'NSPanel_Dimmode_hourNight', {val: 22, ack: true});
                 setObject(AliasPath + 'Dimmode.hourNight', {type: 'channel', common: {role: 'slider', name: 'hourNight'}, native: {}});
-                await createAliasAsync(AliasPath + 'Dimmode.hourNight.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_hourNight', true, <iobJS.StateCommon> {type: 'number', role: 'value', name: 'ACTUAL'});
-                await createAliasAsync(AliasPath + 'Dimmode.hourNight.SET', NSPanel_Path + 'NSPanel_Dimmode_hourNight', true, <iobJS.StateCommon> {type: 'number', role: 'level', name: 'SET'});
+                await createAliasAsync(AliasPath + 'Dimmode.hourNight.ACTUAL', NSPanel_Path + 'NSPanel_Dimmode_hourNight', true, {type: 'number', role: 'value', name: 'ACTUAL'});
+                await createAliasAsync(AliasPath + 'Dimmode.hourNight.SET', NSPanel_Path + 'NSPanel_Dimmode_hourNight', true, {type: 'number', role: 'level', name: 'SET'});
             }
             const vTimeDay = getState(NSPanel_Path + 'NSPanel_Dimmode_hourDay').val;
             const vTimeNight = getState(NSPanel_Path + 'NSPanel_Dimmode_hourNight').val;
@@ -2910,9 +2959,9 @@ async function InitMeanPowerConsumption () {
             meanConsumption = 0; // Assign a default value if undefined
         }
         if (!existsState(meanPower)) {
-            await createStateAsync(meanPower, <iobJS.StateCommon> {type: 'number', write: true, unit: 'W'});
+            await createStateAsync(meanPower, {type: 'number', write: true, unit: 'W'});
         }
-        await setStateAsync(meanPower, <iobJS.State> {val: meanConsumption, ack: true});
+        await setStateAsync(meanPower, {val: meanConsumption, ack: true});
         if (Debug) log(meanConsumption + ' W', 'info');
     } catch (err: any) {
         log('error at function InitMeanPowerConsumption: ' + err.message, 'warn');
@@ -2991,31 +3040,31 @@ const popupNotifyBuzzer = NSPanel_Path + 'popupNotify.popupNotifyBuzzer'; // 1,1
 async function InitPopupNotify () {
     try {
         if (!existsState(screensaverNotifyHeading)) {
-            await createStateAsync(screensaverNotifyHeading, <iobJS.StateCommon> {type: 'string', write: true});
-            await setStateAsync(screensaverNotifyHeading, <iobJS.State> {val: '', ack: true});
+            await createStateAsync(screensaverNotifyHeading, {type: 'string', write: true});
+            await setStateAsync(screensaverNotifyHeading, {val: '', ack: true});
         }
 
         if (!existsState(screensaverNotifyText)) {
-            await createStateAsync(screensaverNotifyText, <iobJS.StateCommon> {type: 'string', write: true});
-            await setStateAsync(screensaverNotifyText, <iobJS.State> {val: '', ack: true});
+            await createStateAsync(screensaverNotifyText, {type: 'string', write: true});
+            await setStateAsync(screensaverNotifyText, {val: '', ack: true});
         }
 
-        await createStateAsync(popupNotifyHeading, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyHeadingColor, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyText, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyTextColor, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyInternalName, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyButton1Text, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyButton1TextColor, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyButton2Text, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyButton2TextColor, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifySleepTimeout, <iobJS.StateCommon> {type: 'number', write: true});
-        await createStateAsync(popupNotifyAction, <iobJS.StateCommon> {type: 'boolean', write: true});
-        await createStateAsync(popupNotifyLayout, <iobJS.StateCommon> {type: 'number', write: true});
-        await createStateAsync(popupNotifyFontIdText, <iobJS.StateCommon> {type: 'number', write: true});
-        await createStateAsync(popupNotifyIcon, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyIconColor, <iobJS.StateCommon> {type: 'string', write: true});
-        await createStateAsync(popupNotifyBuzzer, <iobJS.StateCommon> {type: 'string', def: '0', write: true});
+        await createStateAsync(popupNotifyHeading, {type: 'string', write: true});
+        await createStateAsync(popupNotifyHeadingColor, {type: 'string', write: true});
+        await createStateAsync(popupNotifyText, {type: 'string', write: true});
+        await createStateAsync(popupNotifyTextColor, {type: 'string', write: true});
+        await createStateAsync(popupNotifyInternalName, {type: 'string', write: true});
+        await createStateAsync(popupNotifyButton1Text, {type: 'string', write: true});
+        await createStateAsync(popupNotifyButton1TextColor, {type: 'string', write: true});
+        await createStateAsync(popupNotifyButton2Text, {type: 'string', write: true});
+        await createStateAsync(popupNotifyButton2TextColor, {type: 'string', write: true});
+        await createStateAsync(popupNotifySleepTimeout, {type: 'number', write: true});
+        await createStateAsync(popupNotifyAction, {type: 'boolean', write: true});
+        await createStateAsync(popupNotifyLayout, {type: 'number', write: true});
+        await createStateAsync(popupNotifyFontIdText, {type: 'number', write: true});
+        await createStateAsync(popupNotifyIcon, {type: 'string', write: true});
+        await createStateAsync(popupNotifyIconColor, {type: 'string', write: true});
+        await createStateAsync(popupNotifyBuzzer, {type: 'string', def: '0', write: true});
 
         // Notification to screensaver
         on({id: [screensaverNotifyHeading, screensaverNotifyText], change: 'ne', ack: false}, async (obj) => {
@@ -3033,7 +3082,7 @@ async function InitPopupNotify () {
             }
 
             if (obj.id) {
-                await setStateAsync(obj.id, <iobJS.State> {val: obj.state.val, ack: true}); // ack new value
+                await setStateAsync(obj.id, {val: obj.state.val, ack: true}); // ack new value
             }
         });
 
@@ -3413,8 +3462,8 @@ async function get_locales () {
                     if (Debug) {
                         log(JSON.stringify(response.data), 'info');
                     }
-                    await createStateAsync(NSPanel_Path + 'NSPanel_locales_json', <iobJS.StateCommon> {type: 'string', role: 'json', write: false});
-                    await setStateAsync(NSPanel_Path + 'NSPanel_locales_json', <iobJS.State> {val: JSON.stringify(response.data), ack: true});
+                    await createStateAsync(NSPanel_Path + 'NSPanel_locales_json', {type: 'string', role: 'json', write: false});
+                    await setStateAsync(NSPanel_Path + 'NSPanel_locales_json', {val: JSON.stringify(response.data), ack: true});
                 } else {
                     log('Axios Status - Requesting locales: ' + response.state, 'warn');
                 }
@@ -3453,8 +3502,8 @@ async function get_locales_servicemenu () {
                     if (Debug) {
                         log(JSON.stringify(response.data), 'info');
                     }
-                    await createStateAsync(NSPanel_Path + 'NSPanel_locales_service_json', <iobJS.StateCommon> {type: 'string', role: 'json', write: false});
-                    await setStateAsync(NSPanel_Path + 'NSPanel_locales_service_json', <iobJS.State> {val: JSON.stringify(response.data), ack: true});
+                    await createStateAsync(NSPanel_Path + 'NSPanel_locales_service_json', {type: 'string', role: 'json', write: false});
+                    await setStateAsync(NSPanel_Path + 'NSPanel_locales_service_json', {val: JSON.stringify(response.data), ack: true});
                 } else {
                     log('Axios Status - Requesting locales Service Menu: ' + response.state, 'warn');
                 }
@@ -3508,7 +3557,7 @@ async function check_updates () {
                         update_tasmota_firmware();
                         // Current Tasmota version = online Tasmota version
 
-                        await setStateAsync(NSPanel_Path + 'Tasmota_Firmware.currentVersion', <iobJS.State> {val: getState(NSPanel_Path + 'Tasmota_Firmware.onlineVersion').val, ack: true});
+                        await setStateAsync(NSPanel_Path + 'Tasmota_Firmware.currentVersion', {val: getState(NSPanel_Path + 'Tasmota_Firmware.onlineVersion').val, ack: true});
                     } else {
                         // Point out Tasmota updates
                         if (Debug) log('Tasmota-Firmware => Automatische Updates aus, manuelles Update nötig', 'info');
@@ -3546,7 +3595,7 @@ async function check_updates () {
                         // Tasmota Berry-Driver Update durchführen
                         update_berry_driver_version();
                         // Aktuelle Berry-Driver Version = Online Berry-Driver Version
-                        await setStateAsync(NSPanel_Path + 'Berry_Driver.currentVersion', <iobJS.State> {val: getState(NSPanel_Path + 'Berry_Driver.onlineVersion').val, ack: true});
+                        await setStateAsync(NSPanel_Path + 'Berry_Driver.currentVersion', {val: getState(NSPanel_Path + 'Berry_Driver.onlineVersion').val, ack: true});
 
                         if (Debug) log('Berry driver updated automatically', 'info');
                     } else {
@@ -3590,7 +3639,7 @@ async function check_updates () {
                             update_tft_firmware();
 
                             // Aktuelle TFT-Firmware Version = Online TFT-Firmware Version
-                            await setStateAsync(NSPanel_Path + 'Display_Firmware.currentVersion', <iobJS.State> {val: getState(NSPanel_Path + 'Display_Firmware.onlineVersion').val, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Display_Firmware.currentVersion', {val: getState(NSPanel_Path + 'Display_Firmware.onlineVersion').val, ack: true});
 
                             if (Debug) log('Display firmware updated automatically', 'info');
                         } else {
@@ -3625,16 +3674,16 @@ async function check_updates () {
             update_message = getState(NSPanel_Path + 'Config.Update.UpdateMessage').val;
         }
         if (Update && update_message) {
-            await setStateAsync(popupNotifyHeading, <iobJS.State> {val: Headline, ack: false});
-            await setStateAsync(popupNotifyHeadingColor, <iobJS.State> {val: HeadlineColor, ack: false});
-            await setStateAsync(popupNotifyButton1Text, <iobJS.State> {val: Button1, ack: false});
-            await setStateAsync(popupNotifyButton1TextColor, <iobJS.State> {val: Button1Color, ack: false});
-            await setStateAsync(popupNotifyButton2Text, <iobJS.State> {val: Button2, ack: false});
-            await setStateAsync(popupNotifyButton2TextColor, <iobJS.State> {val: Button2Color, ack: false});
-            await setStateAsync(popupNotifySleepTimeout, <iobJS.State> {val: Timeout, ack: false});
-            await setStateAsync(popupNotifyInternalName, <iobJS.State> {val: InternalName, ack: false});
-            await setStateAsync(popupNotifyLayout, <iobJS.State> {val: Layout, ack: false});
-            await setStateAsync(popupNotifyText, <iobJS.State> {val: [formatDate(getDateObject(new Date().getTime()), 'TT.MM.JJJJ SS:mm:ss'), '\r\n', '\r\n', Text].join(''), ack: false});
+            await setStateAsync(popupNotifyHeading, {val: Headline, ack: false});
+            await setStateAsync(popupNotifyHeadingColor, {val: HeadlineColor, ack: false});
+            await setStateAsync(popupNotifyButton1Text, {val: Button1, ack: false});
+            await setStateAsync(popupNotifyButton1TextColor, {val: Button1Color, ack: false});
+            await setStateAsync(popupNotifyButton2Text, {val: Button2, ack: false});
+            await setStateAsync(popupNotifyButton2TextColor, {val: Button2Color, ack: false});
+            await setStateAsync(popupNotifySleepTimeout, {val: Timeout, ack: false});
+            await setStateAsync(popupNotifyInternalName, {val: InternalName, ack: false});
+            await setStateAsync(popupNotifyLayout, {val: Layout, ack: false});
+            await setStateAsync(popupNotifyText, {val: [formatDate(getDateObject(new Date().getTime()), 'TT.MM.JJJJ SS:mm:ss'), '\r\n', '\r\n', Text].join(''), ack: false});
         } else if (Update && !update_message) {
             log('Updates for NSPanel available', 'info');
         } else {
@@ -3695,31 +3744,31 @@ on({id: NSPanel_Path + 'popupNotify.popupNotifyAction', change: 'any'}, async fu
 async function get_panel_update_data () {
     try {
         if (isSetOptionActive) {
-            await createStateAsync(NSPanel_Path + 'Config.Update.UpdateMessage', true, <iobJS.StateCommon> {read: true, write: true, name: 'Update-Message', type: 'boolean', def: true});
+            await createStateAsync(NSPanel_Path + 'Config.Update.UpdateMessage', true, {read: true, write: true, name: 'Update-Message', type: 'boolean', def: true});
             if (autoCreateAlias) {
                 setObject(AliasPath + 'Config.Update.UpdateMessage', {type: 'channel', common: {role: 'socket', name: 'UpdateMesssage'}, native: {}});
-                await createAliasAsync(AliasPath + 'Config.Update.UpdateMessage.ACTUAL', NSPanel_Path + 'Config.Update.UpdateMessage', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Update.UpdateMessage.ACTUAL', NSPanel_Path + 'Config.Update.UpdateMessage', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'ACTUAL',
                 });
-                await createAliasAsync(AliasPath + 'Config.Update.UpdateMessage.SET', NSPanel_Path + 'Config.Update.UpdateMessage', true, <iobJS.StateCommon> {
+                await createAliasAsync(AliasPath + 'Config.Update.UpdateMessage.SET', NSPanel_Path + 'Config.Update.UpdateMessage', true, {
                     type: 'boolean',
                     role: 'switch',
                     name: 'SET',
                 });
             }
-            await createStateAsync(NSPanel_Path + 'NSPanel_autoUpdate', false, <iobJS.StateCommon> {read: true, write: true, name: 'Auto-Update', type: 'boolean', def: false});
+            await createStateAsync(NSPanel_Path + 'NSPanel_autoUpdate', false, {read: true, write: true, name: 'Auto-Update', type: 'boolean', def: false});
             if (autoCreateAlias) {
                 setObject(AliasPath + 'autoUpdate', {type: 'channel', common: {role: 'socket', name: 'AutoUpdate'}, native: {}});
-                await createAliasAsync(AliasPath + 'autoUpdate.ACTUAL', NSPanel_Path + 'NSPanel_autoUpdate', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'ACTUAL'});
-                await createAliasAsync(AliasPath + 'autoUpdate.SET', NSPanel_Path + 'NSPanel_autoUpdate', true, <iobJS.StateCommon> {type: 'boolean', role: 'switch', name: 'SET'});
+                await createAliasAsync(AliasPath + 'autoUpdate.ACTUAL', NSPanel_Path + 'NSPanel_autoUpdate', true, {type: 'boolean', role: 'switch', name: 'ACTUAL'});
+                await createAliasAsync(AliasPath + 'autoUpdate.SET', NSPanel_Path + 'NSPanel_autoUpdate', true, {type: 'boolean', role: 'switch', name: 'SET'});
             }
-            await createStateAsync(NSPanel_Path + 'NSPanel_ipAddress', <iobJS.StateCommon> {type: 'string', write: false});
-            await setStateAsync(NSPanel_Path + 'NSPanel_ipAddress', <iobJS.State> {val: get_current_tasmota_ip_address(), ack: true});
+            await createStateAsync(NSPanel_Path + 'NSPanel_ipAddress', {type: 'string', write: false});
+            await setStateAsync(NSPanel_Path + 'NSPanel_ipAddress', {val: get_current_tasmota_ip_address(), ack: true});
             if (autoCreateAlias) {
                 setObject(AliasPath + 'ipAddress', {type: 'channel', common: {role: 'info', name: 'ipAddress'}, native: {}});
-                await createAliasAsync(AliasPath + 'ipAddress.ACTUAL', NSPanel_Path + 'NSPanel_ipAddress', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
+                await createAliasAsync(AliasPath + 'ipAddress.ACTUAL', NSPanel_Path + 'NSPanel_ipAddress', true, {type: 'string', role: 'state', name: 'ACTUAL'});
             }
             get_online_tasmota_firmware_version();
             get_current_berry_driver_version();
@@ -3782,14 +3831,14 @@ function get_online_tasmota_firmware_version () {
                         const Tasmota_JSON = JSON.parse(JSON.stringify(response.data)); // Write JSON result to variable
                         const TasmotaTagName = Tasmota_JSON.tag_name; // Filter JSON by "tag_name" and write to variable
                         const TasmotaVersionOnline = TasmotaTagName.replace(/v/i, ''); // Filter unnecessary "v" from variable and write to release variable
-                        await createStateAsync(NSPanel_Path + 'Tasmota_Firmware.onlineVersion', <iobJS.StateCommon> {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota_Firmware.onlineVersion', {type: 'string', write: false});
                         setObject(AliasPath + 'Tasmota_Firmware.onlineVersion', {type: 'channel', common: {role: 'info', name: 'onlineVersion'}, native: {}});
-                        await createAliasAsync(AliasPath + 'Tasmota_Firmware.onlineVersion.ACTUAL', NSPanel_Path + 'Tasmota_Firmware.onlineVersion', true, <iobJS.StateCommon> {
+                        await createAliasAsync(AliasPath + 'Tasmota_Firmware.onlineVersion.ACTUAL', NSPanel_Path + 'Tasmota_Firmware.onlineVersion', true, {
                             type: 'string',
                             role: 'state',
                             name: 'ACTUAL',
                         });
-                        await setStateAsync(NSPanel_Path + 'Tasmota_Firmware.onlineVersion', <iobJS.State> {val: TasmotaVersionOnline, ack: true});
+                        await setStateAsync(NSPanel_Path + 'Tasmota_Firmware.onlineVersion', {val: TasmotaVersionOnline, ack: true});
                         if (Debug) log('online tasmota firmware version => ' + TasmotaVersionOnline, 'info');
                     }
                 } else {
@@ -3830,11 +3879,11 @@ function get_current_berry_driver_version () {
                     }
                     if (isSetOptionActive) {
                         const BerryDriverVersionCurrent: string = JSON.parse(JSON.stringify(response.data)).nlui_driver_version;
-                        await createStateAsync(NSPanel_Path + 'Berry_Driver.currentVersion', <iobJS.StateCommon> {type: 'string', write: false});
-                        await setStateAsync(NSPanel_Path + 'Berry_Driver.currentVersion', <iobJS.State> {val: JSON.parse(JSON.stringify(response.data)).nlui_driver_version, ack: true});
+                        await createStateAsync(NSPanel_Path + 'Berry_Driver.currentVersion', {type: 'string', write: false});
+                        await setStateAsync(NSPanel_Path + 'Berry_Driver.currentVersion', {val: JSON.parse(JSON.stringify(response.data)).nlui_driver_version, ack: true});
                         if (autoCreateAlias) {
                             setObject(AliasPath + 'Display.BerryDriver', {type: 'channel', common: {role: 'info', name: 'Berry Driver'}, native: {}});
-                            await createAliasAsync(AliasPath + 'Display.BerryDriver.ACTUAL', NSPanel_Path + 'Berry_Driver.currentVersion', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Display.BerryDriver.ACTUAL', NSPanel_Path + 'Berry_Driver.currentVersion', true, {
                                 type: 'string',
                                 role: 'state',
                                 name: 'ACTUAL',
@@ -3884,36 +3933,36 @@ function get_tasmota_status0 () {
                         log(JSON.stringify(response.data), 'info');
                     }
                     if (isSetOptionActive) {
-                        await createStateAsync(NSPanel_Path + 'Tasmota_Firmware.currentVersion', <iobJS.StateCommon> {type: 'string', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Uptime', <iobJS.StateCommon> {type: 'string', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Version', <iobJS.StateCommon> {type: 'string', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Hardware', <iobJS.StateCommon> {type: 'string', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.AP', <iobJS.StateCommon> {type: 'number', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.SSId', <iobJS.StateCommon> {type: 'string', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.BSSId', <iobJS.StateCommon> {type: 'string', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.Channel', <iobJS.StateCommon> {type: 'number', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.Mode', <iobJS.StateCommon> {type: 'string', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.RSSI', <iobJS.StateCommon> {type: 'number', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.Signal', <iobJS.StateCommon> {type: 'number', write: false});
-                        await createStateAsync(NSPanel_Path + 'Tasmota.Product', <iobJS.StateCommon> {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota_Firmware.currentVersion', {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Uptime', {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Version', {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Hardware', {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.AP', {type: 'number', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.SSId', {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.BSSId', {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.Channel', {type: 'number', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.Mode', {type: 'string', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.RSSI', {type: 'number', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Wifi.Signal', {type: 'number', write: false});
+                        await createStateAsync(NSPanel_Path + 'Tasmota.Product', {type: 'string', write: false});
 
                         try {
                             const Tasmota_JSON = JSON.parse(JSON.stringify(response.data));
                             const tasmoVersion = Tasmota_JSON.StatusFWR.Version.indexOf('(') > -1 ? Tasmota_JSON.StatusFWR.Version.split('(')[0] : Tasmota_JSON.StatusFWR.Version;
 
-                            await setStateAsync(NSPanel_Path + 'Tasmota_Firmware.currentVersion', <iobJS.State> {val: tasmoVersion, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Uptime', <iobJS.State> {val: Tasmota_JSON.StatusPRM.Uptime, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Version', <iobJS.State> {val: Tasmota_JSON.StatusFWR.Version, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota_Firmware.currentVersion', {val: tasmoVersion, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Uptime', {val: Tasmota_JSON.StatusPRM.Uptime, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Version', {val: Tasmota_JSON.StatusFWR.Version, ack: true});
                             let TasmotaHardware: string = Tasmota_JSON.StatusFWR.Hardware.split(' ');
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Hardware', <iobJS.State> {val: TasmotaHardware[0] + '\r\n' + TasmotaHardware[1], ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.AP', <iobJS.State> {val: Tasmota_JSON.StatusSTS.Wifi.AP, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.SSId', <iobJS.State> {val: Tasmota_JSON.StatusSTS.Wifi.SSId, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.BSSId', <iobJS.State> {val: Tasmota_JSON.StatusSTS.Wifi.BSSId, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.Channel', <iobJS.State> {val: Tasmota_JSON.StatusSTS.Wifi.Channel, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.Mode', <iobJS.State> {val: Tasmota_JSON.StatusSTS.Wifi.Mode, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.RSSI', <iobJS.State> {val: Tasmota_JSON.StatusSTS.Wifi.RSSI, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.Signal', <iobJS.State> {val: Tasmota_JSON.StatusSTS.Wifi.Signal, ack: true});
-                            await setStateAsync(NSPanel_Path + 'Tasmota.Product', <iobJS.State> {val: 'SONOFF NSPanel', ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Hardware', {val: TasmotaHardware[0] + '\r\n' + TasmotaHardware[1], ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.AP', {val: Tasmota_JSON.StatusSTS.Wifi.AP, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.SSId', {val: Tasmota_JSON.StatusSTS.Wifi.SSId, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.BSSId', {val: Tasmota_JSON.StatusSTS.Wifi.BSSId, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.Channel', {val: Tasmota_JSON.StatusSTS.Wifi.Channel, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.Mode', {val: Tasmota_JSON.StatusSTS.Wifi.Mode, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.RSSI', {val: Tasmota_JSON.StatusSTS.Wifi.RSSI, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Wifi.Signal', {val: Tasmota_JSON.StatusSTS.Wifi.Signal, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Tasmota.Product', {val: 'SONOFF NSPanel', ack: true});
                             if (Debug) log('current tasmota firmware version => ' + tasmoVersion, 'info');
                         } catch (err: any) {
                             log('error setState in function get_tasmota_status0' + err.message, 'warn');
@@ -3930,45 +3979,45 @@ function get_tasmota_status0 () {
                             setObject(AliasPath + 'Tasmota.Wifi.RSSI', {type: 'channel', common: {role: 'info', name: 'RSSI'}, native: {}});
                             setObject(AliasPath + 'Tasmota.Wifi.Signal', {type: 'channel', common: {role: 'info', name: 'Signal'}, native: {}});
                             setObject(AliasPath + 'Tasmota.Product', {type: 'channel', common: {role: 'info', name: 'Product'}, native: {}});
-                            await createAliasAsync(AliasPath + 'Tasmota.Uptime.ACTUAL', NSPanel_Path + 'Tasmota.Uptime', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
-                            await createAliasAsync(AliasPath + 'Tasmota.Version.ACTUAL', NSPanel_Path + 'Tasmota.Version', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
-                            await createAliasAsync(AliasPath + 'Tasmota.Hardware.ACTUAL', NSPanel_Path + 'Tasmota.Hardware', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Tasmota.Uptime.ACTUAL', NSPanel_Path + 'Tasmota.Uptime', true, {type: 'string', role: 'state', name: 'ACTUAL'});
+                            await createAliasAsync(AliasPath + 'Tasmota.Version.ACTUAL', NSPanel_Path + 'Tasmota.Version', true, {type: 'string', role: 'state', name: 'ACTUAL'});
+                            await createAliasAsync(AliasPath + 'Tasmota.Hardware.ACTUAL', NSPanel_Path + 'Tasmota.Hardware', true, {
                                 type: 'string',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.AP.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.AP', true, <iobJS.StateCommon> {type: 'number', role: 'state', name: 'ACTUAL'});
-                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.SSId.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.SSId', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.AP.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.AP', true, {type: 'number', role: 'state', name: 'ACTUAL'});
+                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.SSId.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.SSId', true, {
                                 type: 'string',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.BSSId.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.BSSId', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.BSSId.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.BSSId', true, {
                                 type: 'string',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.Channel.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.Channel', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.Channel.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.Channel', true, {
                                 type: 'number',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.Mode.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.Mode', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.Mode.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.Mode', true, {
                                 type: 'string',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.RSSI.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.RSSI', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.RSSI.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.RSSI', true, {
                                 type: 'number',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.Signal.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.Signal', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Tasmota.Wifi.Signal.ACTUAL', NSPanel_Path + 'Tasmota.Wifi.Signal', true, {
                                 type: 'number',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await createAliasAsync(AliasPath + 'Tasmota.Product.ACTUAL', NSPanel_Path + 'Tasmota.Product', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
+                            await createAliasAsync(AliasPath + 'Tasmota.Product.ACTUAL', NSPanel_Path + 'Tasmota.Product', true, {type: 'string', role: 'state', name: 'ACTUAL'});
                         }
                     }
                 } else {
@@ -4054,14 +4103,14 @@ function get_online_berry_driver_version () {
                             const BerryDriverVersionOnline = response.data
                                 .substring(response.data.indexOf('version_of_this_script = ') + 24, response.data.indexOf('version_of_this_script = ') + 27)
                                 .replace(/\s+/g, '');
-                            await createStateAsync(NSPanel_Path + 'Berry_Driver.onlineVersion', <iobJS.StateCommon> {type: 'string', write: false});
+                            await createStateAsync(NSPanel_Path + 'Berry_Driver.onlineVersion', {type: 'string', write: false});
                             setObject(AliasPath + 'Berry_Driver.onlineVersion', {type: 'channel', common: {role: 'info', name: 'onlineVersion'}, native: {}});
-                            await createAliasAsync(AliasPath + 'Berry_Driver.onlineVersion.ACTUAL', NSPanel_Path + 'Berry_Driver.onlineVersion', true, <iobJS.StateCommon> {
+                            await createAliasAsync(AliasPath + 'Berry_Driver.onlineVersion.ACTUAL', NSPanel_Path + 'Berry_Driver.onlineVersion', true, {
                                 type: 'string',
                                 role: 'state',
                                 name: 'ACTUAL',
                             });
-                            await setStateAsync(NSPanel_Path + 'Berry_Driver.onlineVersion', <iobJS.State> {val: BerryDriverVersionOnline, ack: true});
+                            await setStateAsync(NSPanel_Path + 'Berry_Driver.onlineVersion', {val: BerryDriverVersionOnline, ack: true});
                             if (Debug) log('online berry driver version => ' + BerryDriverVersionOnline, 'info');
                         }
                     } else {
@@ -4105,8 +4154,8 @@ function check_version_tft_firmware () {
                     let NSPanelTagName = NSPanel_JSON.tag_name; // created_at; published_at; name ; draft ; prerelease
                     let NSPanelVersion = NSPanelTagName.replace(/v/i, ''); // Filter unnecessary "v" from variable and write to release variable
 
-                    await createStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', <iobJS.StateCommon> {type: 'string', write: false});
-                    await setStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', <iobJS.State> {val: NSPanelVersion, ack: true});
+                    await createStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', {type: 'string', write: false});
+                    await setStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', {val: NSPanelVersion, ack: true});
                     if (Debug) log('online TFT firmware version => ' + NSPanelVersion, 'info');
                 } else {
                     log('Axios Status - check_version_tft_firmware: ' + response.state, 'warn');
@@ -4148,8 +4197,8 @@ function check_online_display_firmware () {
                         .substring(response.data.indexOf('desired_display_firmware_version =') + 34, response.data.indexOf('desired_display_firmware_version =') + 38)
                         .replace(/\s+/g, '');
 
-                    await createStateAsync(NSPanel_Path + 'Display_Firmware.onlineVersion', <iobJS.StateCommon> {type: 'string', write: false});
-                    await setStateAsync(NSPanel_Path + 'Display_Firmware.onlineVersion', <iobJS.State> {val: desired_display_firmware_version, ack: true});
+                    await createStateAsync(NSPanel_Path + 'Display_Firmware.onlineVersion', {type: 'string', write: false});
+                    await setStateAsync(NSPanel_Path + 'Display_Firmware.onlineVersion', {val: desired_display_firmware_version, ack: true});
                     if (Debug) log('online display firmware version => ' + desired_display_firmware_version, 'info');
                 } else {
                     log('Axios Status - check_online_display_firmware: ' + response.state, 'warn');
@@ -4182,29 +4231,29 @@ on({id: config.panelRecvTopic}, async (obj) => {
             const split = json.CustomRecv.split(',');
             if (isSetOptionActive) {
                 if (split[0] == 'event' && split[1] == 'startup') {
-                    await createStateAsync(NSPanel_Path + 'Display_Firmware.currentVersion', <iobJS.StateCommon> {type: 'string', write: false});
-                    await createStateAsync(NSPanel_Path + 'Display_Firmware.currentRelease', <iobJS.StateCommon> {type: 'string', write: false});
-                    await createStateAsync(NSPanel_Path + 'NSPanel_Version', <iobJS.StateCommon> {type: 'string', write: false});
+                    await createStateAsync(NSPanel_Path + 'Display_Firmware.currentVersion', {type: 'string', write: false});
+                    await createStateAsync(NSPanel_Path + 'Display_Firmware.currentRelease', {type: 'string', write: false});
+                    await createStateAsync(NSPanel_Path + 'NSPanel_Version', {type: 'string', write: false});
 
-                    await setStateAsync(NSPanel_Path + 'Display_Firmware.currentVersion', <iobJS.State> {val: split[2], ack: true});
-                    await setStateAsync(NSPanel_Path + 'Display_Firmware.currentRelease', <iobJS.State> {val: split[4], ack: true});
-                    await setStateAsync(NSPanel_Path + 'NSPanel_Version', <iobJS.State> {val: split[3], ack: true});
+                    await setStateAsync(NSPanel_Path + 'Display_Firmware.currentVersion', {val: split[2], ack: true});
+                    await setStateAsync(NSPanel_Path + 'Display_Firmware.currentRelease', {val: split[4], ack: true});
+                    await setStateAsync(NSPanel_Path + 'NSPanel_Version', {val: split[3], ack: true});
 
                     if (autoCreateAlias) {
                         setObject(AliasPath + 'Display.TFTVersion', {type: 'channel', common: {role: 'info', name: 'Display.TFTVersion'}, native: {}});
                         setObject(AliasPath + 'Display.TFTRelease', {type: 'channel', common: {role: 'info', name: 'Display.TFTRelease'}, native: {}});
                         setObject(AliasPath + 'Display.Model', {type: 'channel', common: {role: 'info', name: 'Display.Model'}, native: {}});
-                        await createAliasAsync(AliasPath + 'Display.TFTVersion.ACTUAL', NSPanel_Path + 'Display_Firmware.currentVersion', true, <iobJS.StateCommon> {
+                        await createAliasAsync(AliasPath + 'Display.TFTVersion.ACTUAL', NSPanel_Path + 'Display_Firmware.currentVersion', true, {
                             type: 'string',
                             role: 'state',
                             name: 'ACTUAL',
                         });
-                        await createAliasAsync(AliasPath + 'Display.TFTRelease.ACTUAL', NSPanel_Path + 'Display_Firmware.currentRelease', true, <iobJS.StateCommon> {
+                        await createAliasAsync(AliasPath + 'Display.TFTRelease.ACTUAL', NSPanel_Path + 'Display_Firmware.currentRelease', true, {
                             type: 'string',
                             role: 'state',
                             name: 'ACTUAL',
                         });
-                        await createAliasAsync(AliasPath + 'Display.Model.ACTUAL', NSPanel_Path + 'NSPanel_Version', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
+                        await createAliasAsync(AliasPath + 'Display.Model.ACTUAL', NSPanel_Path + 'NSPanel_Version', true, {type: 'string', role: 'state', name: 'ACTUAL'});
                     }
                 }
             }
@@ -4293,8 +4342,8 @@ function update_tft_firmware () {
                                     if (Debug) {
                                         log(response.data, 'info');
                                     }
-                                    await createStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', <iobJS.StateCommon> {type: 'string', write: false});
-                                    await setStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', <iobJS.State> {val: tft_version, ack: true});
+                                    await createStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', {type: 'string', write: false});
+                                    await setStateAsync(NSPanel_Path + 'TFT_Firmware.onlineVersion', {val: tft_version, ack: true});
                                     Init_Release();
                                 } else {
                                     log('Axios Status - update_tft_firmware: ' + response.state, 'warn');
@@ -5132,6 +5181,8 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
 
                         case 'temperature':
 
+                        case 'illuminance':
+
                         case 'value.temperature':
 
                         case 'value.humidity':
@@ -5243,7 +5294,7 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
                     if (pageItem.popupVersion !== undefined) {
                         if (pageItem.popupVersion == 1) {
                             type = 'light';    
-                        } else if (pageItem.popupVersion == 2){
+                        } else if (pageItem.popupVersion == 2) {
                             type = 'light2';    
                         }
                     }
@@ -5291,6 +5342,7 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
                     //Check last Change of DP HUE or CT for Icon in GUI
                     if (existsState(pageItem.id + '.HUE') && existsState(pageItem.id + '.TEMPERATURE') && existsState(pageItem.id + '.DIMMER') && pageItem.interpolateColor) {
                         let brightness = getState(pageItem.id + '.DIMMER').val;
+                        //@ts-ignore
                         if (getState(pageItem.id + '.TEMPERATURE').ts < getState(pageItem.id + '.HUE').ts) {
                             if (Debug) log('HUE wurde zuletzt geändert - Lampe ist Color-Mode');
                             let huecolor = hsv2rgb(getState(pageItem.id + '.HUE').val, 1, 1);
@@ -5374,6 +5426,7 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
                     //Check last Change of DP RGB or CT for Icon in GUI
                     if (existsState(pageItem.id + '.RED') && existsState(pageItem.id + '.GREEN') && existsState(pageItem.id + '.BLUE') && existsState(pageItem.id + '.TEMPERATURE') && existsState(pageItem.id + '.DIMMER') && pageItem.interpolateColor) {
                         let brightness = getState(pageItem.id + '.DIMMER').val;
+                        //@ts-ignore
                         if (getState(pageItem.id + '.TEMPERATURE').ts < getState(pageItem.id + '.RED').ts) {
                             if (Debug) log('RED wurde zuletzt geändert - Lampe ist Color-Mode');
                             if (getState(pageItem.id + '.RED').val != null) {
@@ -5428,6 +5481,7 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
                     //Check last Change of DP CIE or CT for Icon in GUI
                     if (existsState(pageItem.id + '.CIE') && existsState(pageItem.id + '.TEMPERATURE') && existsState(pageItem.id + '.DIMMER') && pageItem.interpolateColor) {
                         let brightness = getState(pageItem.id + '.DIMMER').val;
+                        //@ts-ignore
                         if (getState(pageItem.id + '.TEMPERATURE').ts < getState(pageItem.id + '.CIE').ts) {
                             if (Debug) log('CIE wurde zuletzt geändert - Lampe ist Color-Mode');
                             if (getState(pageItem.id + '.CIE').val != null) {
@@ -5481,6 +5535,7 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
                     //Check last Change of DP RGB or CT for Icon in GUI
                     if (existsState(pageItem.id + '.RGB') && existsState(pageItem.id + '.TEMPERATURE') && existsState(pageItem.id + '.DIMMER') && pageItem.interpolateColor) {
                         let brightness = getState(pageItem.id + '.DIMMER').val;
+                        //@ts-ignore
                         if (getState(pageItem.id + '.TEMPERATURE').ts < getState(pageItem.id + '.RGB').ts) {
                             if (Debug) log('RGB wurde zuletzt geändert - Lampe ist Color-Mode');
                             if (getState(pageItem.id + '.RGB').val != null) {
@@ -5645,6 +5700,8 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
 
                 case 'humidity':
 
+                case 'illuminance':
+
                 case 'temperature':
 
                 case 'value.temperature':
@@ -5720,6 +5777,28 @@ function CreateEntity (pageItem: PageItem, placeId: number, useColors: boolean =
                             iconId = optVal + '¬' + pageItem.fontSize;
                         } else {
                             iconId = optVal;
+                        }
+                    }
+
+                    if (existsState(pageItem.id + '.ACTUAL') && pageItem.icon2 != undefined) {
+                        // Read Alias Datapoint Objectdata
+                        let obj = getObject(pageItem.id + ".ACTUAL");
+                        // Read origin Datapoint Objectdata
+                        if (existsState(obj.common.alias.id)) {
+                            let obj2 = getObject(obj.common.alias.id);
+                            // Register Origin Datapoint
+                            RegisterEntityWatcher(obj.common.alias.id);
+                            // Check Data-Type (This must be boolean)
+                            if (obj2.type === 'state' && obj2.common.type == "boolean") {
+                                if (Debug) log(getState(obj.common.alias.id).val, 'info');
+                                if (getState(obj.common.alias.id).val) {
+                                    iconId = pageItem.icon != undefined ? Icons.GetIcon(pageItem.icon) : iconId;
+                                    iconColor = pageItem.onColor != undefined ? rgb_dec565(pageItem.onColor) : iconColor;
+                                } else {
+                                    iconId = pageItem.icon2 != undefined ? Icons.GetIcon(pageItem.icon2) : iconId;
+                                    iconColor = pageItem.offColor != undefined ? rgb_dec565(pageItem.offColor) : iconColor;
+                                }
+                            }
                         }
                     }
 
@@ -6101,6 +6180,7 @@ function RegisterEntityWatcher (id: string): void {
         }
 
         subscriptions[id] = on({id: id, change: 'any'}, (obj) => {
+            //@ts-ignore
             if (obj.oldState && obj.oldState.val === obj.state.val && obj.state.ack) {
                 return;
             }
@@ -6140,6 +6220,7 @@ function RegisterDetailEntityWatcher (id: string, pageItem: PageItem, type: NSPa
         if (Debug) log('id: ' + id + ' - pageItem: ' + JSON.stringify(pageItem) + ' - type: ' + type + ' - placeId: ' + placeId, 'info');
 
         subscriptions[id] = on({id: id, change: 'any'}, (obj) => {
+            //@ts-ignore
             if (obj.oldState && obj.oldState.val === obj.state.val && obj.state.ack) {
                 return;
             }
@@ -6216,7 +6297,7 @@ function GenerateThermoPage (page: NSPanel.PageThermo): NSPanel.Payload[] {
         // ioBroker
         if (id && existsObject(id)) {
             let o = getObject(id);
-            let name = page.heading !== undefined ? page.heading : o.common.name.de;
+            let name = page.heading !== undefined ? page.heading : o.common.name && typeof o.common.name === 'object' ? o.common.name.de : o.common.name;
             let currentTemp = 0;
             if (existsState(id + '.ACTUAL')) {
                 currentTemp = Math.round(parseFloat(getState(id + '.ACTUAL').val) * 10) / 10;
@@ -6762,19 +6843,19 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                             const dpPath: string = adapterPlayerInstance + 'Echo-Devices.' + mediaDevice;
                             try {
                                 setObject(id, {_id: id, type: 'channel', common: {role: 'media', name: 'media'}, native: {}});
-                                await createAliasAsync(id + '.ACTUAL', dpPath + '.Player.volume', true, <iobJS.StateCommon> {type: 'number', role: 'value.volume', name: 'ACTUAL'});
-                                await createAliasAsync(id + '.ALBUM', dpPath + '.Player.currentAlbum', true, <iobJS.StateCommon> {type: 'string', role: 'media.album', name: 'ALBUM'});
-                                await createAliasAsync(id + '.ARTIST', dpPath + '.Player.currentArtist', true, <iobJS.StateCommon> {type: 'string', role: 'media.artist', name: 'ARTIST'});
-                                await createAliasAsync(id + '.TITLE', dpPath + '.Player.currentTitle', true, <iobJS.StateCommon> {type: 'string', role: 'media.title', name: 'TITLE'});
-                                await createAliasAsync(id + '.NEXT', dpPath + '.Player.controlNext', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.next', name: 'NEXT'});
-                                await createAliasAsync(id + '.PREV', dpPath + '.Player.controlPrevious', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.prev', name: 'PREV'});
-                                await createAliasAsync(id + '.PLAY', dpPath + '.Player.controlPlay', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.play', name: 'PLAY'});
-                                await createAliasAsync(id + '.PAUSE', dpPath + '.Player.controlPause', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
-                                await createAliasAsync(id + '.STOP', dpPath + '.Commands.deviceStop', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.stop', name: 'STOP'});
-                                await createAliasAsync(id + '.STATE', dpPath + '.Player.currentState', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.state', name: 'STATE'});
-                                await createAliasAsync(id + '.VOLUME', dpPath + '.Player.volume', true, <iobJS.StateCommon> {type: 'number', role: 'level.volume', name: 'VOLUME'});
-                                await createAliasAsync(id + '.REPEAT', dpPath + '.Player.controlRepeat', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.repeat', name: 'REPEAT'});
-                                await createAliasAsync(id + '.SHUFFLE', dpPath + '.Player.controlShuffle', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
+                                await createAliasAsync(id + '.ACTUAL', dpPath + '.Player.volume', true, {type: 'number', role: 'value.volume', name: 'ACTUAL'});
+                                await createAliasAsync(id + '.ALBUM', dpPath + '.Player.currentAlbum', true, {type: 'string', role: 'media.album', name: 'ALBUM'});
+                                await createAliasAsync(id + '.ARTIST', dpPath + '.Player.currentArtist', true, {type: 'string', role: 'media.artist', name: 'ARTIST'});
+                                await createAliasAsync(id + '.TITLE', dpPath + '.Player.currentTitle', true, {type: 'string', role: 'media.title', name: 'TITLE'});
+                                await createAliasAsync(id + '.NEXT', dpPath + '.Player.controlNext', true, {type: 'boolean', role: 'button.next', name: 'NEXT'});
+                                await createAliasAsync(id + '.PREV', dpPath + '.Player.controlPrevious', true, {type: 'boolean', role: 'button.prev', name: 'PREV'});
+                                await createAliasAsync(id + '.PLAY', dpPath + '.Player.controlPlay', true, {type: 'boolean', role: 'button.play', name: 'PLAY'});
+                                await createAliasAsync(id + '.PAUSE', dpPath + '.Player.controlPause', true, {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
+                                await createAliasAsync(id + '.STOP', dpPath + '.Commands.deviceStop', true, {type: 'boolean', role: 'button.stop', name: 'STOP'});
+                                await createAliasAsync(id + '.STATE', dpPath + '.Player.currentState', true, {type: 'boolean', role: 'media.state', name: 'STATE'});
+                                await createAliasAsync(id + '.VOLUME', dpPath + '.Player.volume', true, {type: 'number', role: 'level.volume', name: 'VOLUME'});
+                                await createAliasAsync(id + '.REPEAT', dpPath + '.Player.controlRepeat', true, {type: 'boolean', role: 'media.mode.repeat', name: 'REPEAT'});
+                                await createAliasAsync(id + '.SHUFFLE', dpPath + '.Player.controlShuffle', true, {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
                             } catch (err: any) {
                                 log('error at function createAutoMediaAlias Adapter Alexa2: ' + err.message, 'warn');
                             }
@@ -6782,8 +6863,8 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                         //Add Alexa Datapoints > v4.3.3.18
                         if (existsObject(id + '.DURATION') == false) {
                             let dpPath: string = adapterPlayerInstance + 'Echo-Devices.' + mediaDevice;
-                            await createAliasAsync(id + '.DURATION', dpPath + '.Player.mediaLength', true, <iobJS.StateCommon> {type: 'string', role: 'media.duration.text', name: 'DURATION'});
-                            await createAliasAsync(id + '.ELAPSED', dpPath + '.Player.mediaProgressStr', true, <iobJS.StateCommon> {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
+                            await createAliasAsync(id + '.DURATION', dpPath + '.Player.mediaLength', true, {type: 'string', role: 'media.duration.text', name: 'DURATION'});
+                            await createAliasAsync(id + '.ELAPSED', dpPath + '.Player.mediaProgressStr', true, {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
                         }
                     }
                     break;
@@ -6804,24 +6885,24 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                             const dpPath: string = adapterPlayerInstance + 'root.' + mediaDevice;
                             try {
                                 setObject(id, {_id: id, type: 'channel', common: {role: 'media', name: 'media'}, native: {}});
-                                await createAliasAsync(id + '.ACTUAL', dpPath + '.volume', true, <iobJS.StateCommon> {type: 'number', role: 'value.volume', name: 'ACTUAL'});
-                                await createAliasAsync(id + '.ALBUM', dpPath + '.current_album', true, <iobJS.StateCommon> {type: 'string', role: 'media.album', name: 'ALBUM'});
-                                await createAliasAsync(id + '.ARTIST', dpPath + '.current_artist', true, <iobJS.StateCommon> {type: 'string', role: 'media.artist', name: 'ARTIST'});
-                                await createAliasAsync(id + '.TITLE', dpPath + '.current_title', true, <iobJS.StateCommon> {type: 'string', role: 'media.title', name: 'TITLE'});
-                                await createAliasAsync(id + '.CONTEXT_DESCRIPTION', dpPath + '.current_station', true, <iobJS.StateCommon> {
+                                await createAliasAsync(id + '.ACTUAL', dpPath + '.volume', true, {type: 'number', role: 'value.volume', name: 'ACTUAL'});
+                                await createAliasAsync(id + '.ALBUM', dpPath + '.current_album', true, {type: 'string', role: 'media.album', name: 'ALBUM'});
+                                await createAliasAsync(id + '.ARTIST', dpPath + '.current_artist', true, {type: 'string', role: 'media.artist', name: 'ARTIST'});
+                                await createAliasAsync(id + '.TITLE', dpPath + '.current_title', true, {type: 'string', role: 'media.title', name: 'TITLE'});
+                                await createAliasAsync(id + '.CONTEXT_DESCRIPTION', dpPath + '.current_station', true, {
                                     type: 'string',
                                     role: 'media.station',
                                     name: 'CONTEXT_DESCRIPTION',
                                 });
-                                await createAliasAsync(id + '.NEXT', dpPath + '.next', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.next', name: 'NEXT'});
-                                await createAliasAsync(id + '.PREV', dpPath + '.prev', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.prev', name: 'PREV'});
-                                await createAliasAsync(id + '.PLAY', dpPath + '.play', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.play', name: 'PLAY'});
-                                await createAliasAsync(id + '.PAUSE', dpPath + '.pause', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
-                                await createAliasAsync(id + '.STOP', dpPath + '.stop', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.stop', name: 'STOP'});
-                                await createAliasAsync(id + '.STATE', dpPath + '.state_simple', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.state', name: 'STATE'});
-                                await createAliasAsync(id + '.VOLUME', dpPath + '.volume', true, <iobJS.StateCommon> {type: 'number', role: 'level.volume', name: 'VOLUME'});
-                                await createAliasAsync(id + '.REPEAT', dpPath + '.repeat', true, <iobJS.StateCommon> {type: 'number', role: 'media.mode.repeat', name: 'REPEAT'});
-                                await createAliasAsync(id + '.SHUFFLE', dpPath + '.shuffle', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
+                                await createAliasAsync(id + '.NEXT', dpPath + '.next', true, {type: 'boolean', role: 'button.next', name: 'NEXT'});
+                                await createAliasAsync(id + '.PREV', dpPath + '.prev', true, {type: 'boolean', role: 'button.prev', name: 'PREV'});
+                                await createAliasAsync(id + '.PLAY', dpPath + '.play', true, {type: 'boolean', role: 'button.play', name: 'PLAY'});
+                                await createAliasAsync(id + '.PAUSE', dpPath + '.pause', true, {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
+                                await createAliasAsync(id + '.STOP', dpPath + '.stop', true, {type: 'boolean', role: 'button.stop', name: 'STOP'});
+                                await createAliasAsync(id + '.STATE', dpPath + '.state_simple', true, {type: 'boolean', role: 'media.state', name: 'STATE'});
+                                await createAliasAsync(id + '.VOLUME', dpPath + '.volume', true, {type: 'number', role: 'level.volume', name: 'VOLUME'});
+                                await createAliasAsync(id + '.REPEAT', dpPath + '.repeat', true, {type: 'number', role: 'media.mode.repeat', name: 'REPEAT'});
+                                await createAliasAsync(id + '.SHUFFLE', dpPath + '.shuffle', true, {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
                             } catch (err: any) {
                                 log('error at function createAutoMediaAlias Adapter sonos: ' + err.message, 'warn');
                             }
@@ -6829,9 +6910,9 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                         //Add Sonos Datapoints > v4.3.3.15
                         if (existsObject(id + '.QUEUE') == false) {
                             let dpPath: string = adapterPlayerInstance + 'root.' + mediaDevice;
-                            await createAliasAsync(id + '.QUEUE', dpPath + '.queue', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'QUEUE'});
-                            await createAliasAsync(id + '.DURATION', dpPath + '.current_duration_s', true, <iobJS.StateCommon> {type: 'string', role: 'media.duration.text', name: 'DURATION'});
-                            await createAliasAsync(id + '.ELAPSED', dpPath + '.current_elapsed_s', true, <iobJS.StateCommon> {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
+                            await createAliasAsync(id + '.QUEUE', dpPath + '.queue', true, {type: 'string', role: 'state', name: 'QUEUE'});
+                            await createAliasAsync(id + '.DURATION', dpPath + '.current_duration_s', true, {type: 'string', role: 'media.duration.text', name: 'DURATION'});
+                            await createAliasAsync(id + '.ELAPSED', dpPath + '.current_elapsed_s', true, {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
                         }
                     }
                     break;
@@ -6852,24 +6933,24 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                             const dpPath: string = adapterPlayerInstance;
                             try {
                                 setObject(id, {_id: id + 'player', type: 'channel', common: {role: 'media', name: 'media'}, native: {}});
-                                await createAliasAsync(id + '.ACTUAL', dpPath + 'player.volume', true, <iobJS.StateCommon> {type: 'number', role: 'value.volume', name: 'ACTUAL'});
-                                await createAliasAsync(id + '.ALBUM', dpPath + 'player.album', true, <iobJS.StateCommon> {type: 'string', role: 'media.album', name: 'ALBUM'});
-                                await createAliasAsync(id + '.ARTIST', dpPath + 'player.artistName', true, <iobJS.StateCommon> {type: 'string', role: 'media.artist', name: 'ARTIST'});
-                                await createAliasAsync(id + '.TITLE', dpPath + 'player.trackName', true, <iobJS.StateCommon> {type: 'string', role: 'media.title', name: 'TITLE'});
-                                await createAliasAsync(id + '.CONTEXT_DESCRIPTION', dpPath + 'player.contextDescription', true, <iobJS.StateCommon> {
+                                await createAliasAsync(id + '.ACTUAL', dpPath + 'player.volume', true, {type: 'number', role: 'value.volume', name: 'ACTUAL'});
+                                await createAliasAsync(id + '.ALBUM', dpPath + 'player.album', true, {type: 'string', role: 'media.album', name: 'ALBUM'});
+                                await createAliasAsync(id + '.ARTIST', dpPath + 'player.artistName', true, {type: 'string', role: 'media.artist', name: 'ARTIST'});
+                                await createAliasAsync(id + '.TITLE', dpPath + 'player.trackName', true, {type: 'string', role: 'media.title', name: 'TITLE'});
+                                await createAliasAsync(id + '.CONTEXT_DESCRIPTION', dpPath + 'player.contextDescription', true, {
                                     type: 'string',
                                     role: 'media.station',
                                     name: 'CONTEXT_DESCRIPTION',
                                 });
-                                await createAliasAsync(id + '.NEXT', dpPath + 'player.skipPlus', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.next', name: 'NEXT'});
-                                await createAliasAsync(id + '.PREV', dpPath + 'player.skipMinus', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.prev', name: 'PREV'});
-                                await createAliasAsync(id + '.PLAY', dpPath + 'player.play', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.play', name: 'PLAY'});
-                                await createAliasAsync(id + '.PAUSE', dpPath + 'player.pause', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
-                                await createAliasAsync(id + '.STOP', dpPath + 'player.pause', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.stop', name: 'STOP'});
-                                await createAliasAsync(id + '.STATE', dpPath + 'player.isPlaying', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.state', name: 'STATE'});
-                                await createAliasAsync(id + '.VOLUME', dpPath + 'player.volume', true, <iobJS.StateCommon> {type: 'number', role: 'level.volume', name: 'VOLUME'});
-                                await createAliasAsync(id + '.REPEAT', dpPath + 'player.repeat', true, <iobJS.StateCommon> {type: 'string', role: 'value', name: 'REPEAT'});
-                                await createAliasAsync(id + '.SHUFFLE', dpPath + 'player.shuffle', true, <iobJS.StateCommon> {type: 'string', role: 'value', name: 'SHUFFLE'});
+                                await createAliasAsync(id + '.NEXT', dpPath + 'player.skipPlus', true, {type: 'boolean', role: 'button.next', name: 'NEXT'});
+                                await createAliasAsync(id + '.PREV', dpPath + 'player.skipMinus', true, {type: 'boolean', role: 'button.prev', name: 'PREV'});
+                                await createAliasAsync(id + '.PLAY', dpPath + 'player.play', true, {type: 'boolean', role: 'button.play', name: 'PLAY'});
+                                await createAliasAsync(id + '.PAUSE', dpPath + 'player.pause', true, {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
+                                await createAliasAsync(id + '.STOP', dpPath + 'player.pause', true, {type: 'boolean', role: 'button.stop', name: 'STOP'});
+                                await createAliasAsync(id + '.STATE', dpPath + 'player.isPlaying', true, {type: 'boolean', role: 'media.state', name: 'STATE'});
+                                await createAliasAsync(id + '.VOLUME', dpPath + 'player.volume', true, {type: 'number', role: 'level.volume', name: 'VOLUME'});
+                                await createAliasAsync(id + '.REPEAT', dpPath + 'player.repeat', true, {type: 'string', role: 'value', name: 'REPEAT'});
+                                await createAliasAsync(id + '.SHUFFLE', dpPath + 'player.shuffle', true, {type: 'string', role: 'value', name: 'SHUFFLE'});
                             } catch (err: any) {
                                 log('error at function createAutoMediaAlias Adapter spotify-premium: ' + err.message, 'warn');
                             }
@@ -6878,8 +6959,8 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                         //Spotify-Premium has Role value and a known Bug in player.progress
                         if (existsObject(id + '.DURATION') == false) {
                             const dpPath: string = adapterPlayerInstance;
-                            await createAliasAsync(id + '.DURATION', dpPath + 'player.duration', true, <iobJS.StateCommon> {type: 'string', role: 'media.duration.text', name: 'DURATION'});
-                            await createAliasAsync(id + '.ELAPSED', dpPath + 'player.progress', true, <iobJS.StateCommon> {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
+                            await createAliasAsync(id + '.DURATION', dpPath + 'player.duration', true, {type: 'string', role: 'media.duration.text', name: 'DURATION'});
+                            await createAliasAsync(id + '.ELAPSED', dpPath + 'player.progress', true, {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
                         }
                     }
                     break;
@@ -6900,20 +6981,20 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                             const dpPath: string = adapterPlayerInstance;
                             try {
                                 setObject(id, {_id: id, type: 'channel', common: {role: 'media', name: 'media'}, native: {}});
-                                await createAliasAsync(id + '.ACTUAL', dpPath + 'playbackInfo.volume', true, <iobJS.StateCommon> {type: 'number', role: 'value.volume', name: 'ACTUAL'});
-                                await createAliasAsync(id + '.ALBUM', dpPath + 'playbackInfo.album', true, <iobJS.StateCommon> {type: 'string', role: 'media.album', name: 'ALBUM'});
-                                await createAliasAsync(id + '.ARTIST', dpPath + 'playbackInfo.artist', true, <iobJS.StateCommon> {type: 'string', role: 'media.artist', name: 'ARTIST'});
-                                await createAliasAsync(id + '.TITLE', dpPath + 'playbackInfo.title', true, <iobJS.StateCommon> {type: 'string', role: 'media.title', name: 'TITLE'});
-                                await createAliasAsync(id + '.NEXT', dpPath + 'player.next', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.next', name: 'NEXT'});
-                                await createAliasAsync(id + '.PREV', dpPath + 'player.prev', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.prev', name: 'PREV'});
-                                await createAliasAsync(id + '.PLAY', dpPath + 'player.play', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.play', name: 'PLAY'});
-                                await createAliasAsync(id + '.PAUSE', dpPath + 'player.toggle', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
-                                await createAliasAsync(id + '.STOP', dpPath + 'player.stop', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.stop', name: 'STOP'});
-                                await createAliasAsync(id + '.STATE', dpPath + 'playbackInfo.status', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.state', name: 'STATE'});
-                                await createAliasAsync(id + '.VOLUME', dpPath + 'playbackInfo.volume', true, <iobJS.StateCommon> {type: 'number', role: 'level.volume', name: 'VOLUME'});
-                                await createAliasAsync(id + '.REPEAT', dpPath + 'playbackInfo.repeat', true, <iobJS.StateCommon> {type: 'number', role: 'media.mode.repeat', name: 'REPEAT'});
-                                await createAliasAsync(id + '.SHUFFLE', dpPath + 'queue.shuffle', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
-                                await createAliasAsync(id + '.status', dpPath + 'playbackInfo.status', true, <iobJS.StateCommon> {type: 'string', role: 'media.state', name: 'status'});
+                                await createAliasAsync(id + '.ACTUAL', dpPath + 'playbackInfo.volume', true, {type: 'number', role: 'value.volume', name: 'ACTUAL'});
+                                await createAliasAsync(id + '.ALBUM', dpPath + 'playbackInfo.album', true, {type: 'string', role: 'media.album', name: 'ALBUM'});
+                                await createAliasAsync(id + '.ARTIST', dpPath + 'playbackInfo.artist', true, {type: 'string', role: 'media.artist', name: 'ARTIST'});
+                                await createAliasAsync(id + '.TITLE', dpPath + 'playbackInfo.title', true, {type: 'string', role: 'media.title', name: 'TITLE'});
+                                await createAliasAsync(id + '.NEXT', dpPath + 'player.next', true, {type: 'boolean', role: 'button.next', name: 'NEXT'});
+                                await createAliasAsync(id + '.PREV', dpPath + 'player.prev', true, {type: 'boolean', role: 'button.prev', name: 'PREV'});
+                                await createAliasAsync(id + '.PLAY', dpPath + 'player.play', true, {type: 'boolean', role: 'button.play', name: 'PLAY'});
+                                await createAliasAsync(id + '.PAUSE', dpPath + 'player.toggle', true, {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
+                                await createAliasAsync(id + '.STOP', dpPath + 'player.stop', true, {type: 'boolean', role: 'button.stop', name: 'STOP'});
+                                await createAliasAsync(id + '.STATE', dpPath + 'playbackInfo.status', true, {type: 'boolean', role: 'media.state', name: 'STATE'});
+                                await createAliasAsync(id + '.VOLUME', dpPath + 'playbackInfo.volume', true, {type: 'number', role: 'level.volume', name: 'VOLUME'});
+                                await createAliasAsync(id + '.REPEAT', dpPath + 'playbackInfo.repeat', true, {type: 'number', role: 'media.mode.repeat', name: 'REPEAT'});
+                                await createAliasAsync(id + '.SHUFFLE', dpPath + 'queue.shuffle', true, {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
+                                await createAliasAsync(id + '.status', dpPath + 'playbackInfo.status', true, {type: 'string', role: 'media.state', name: 'status'});
                             } catch (err: any) {
                                 log('error function createAutoMediaAlias Adapter volumio: ' + err.message, 'warn');
                             }
@@ -6921,8 +7002,8 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                         //Add Volumio Datapoints > v4.3.3.42
                         if (existsObject(id + '.DURATION') == false) {
                             const dpPath: string = adapterPlayerInstance;
-                            await createAliasAsync(id + '.DURATION', dpPath + 'playbackInfo.duration', true, <iobJS.StateCommon> {type: 'string', role: 'media.duration', name: 'DURATION'});
-                            //await createAliasAsync(id + '.ELAPSED', dpPath + 'player.progress', true, <iobJS.StateCommon> {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
+                            await createAliasAsync(id + '.DURATION', dpPath + 'playbackInfo.duration', true, {type: 'string', role: 'media.duration', name: 'DURATION'});
+                            //await createAliasAsync(id + '.ELAPSED', dpPath + 'player.progress', true, {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
                         }
                     }
                     break;
@@ -6943,36 +7024,36 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                             const dpPath: string = adapterPlayerInstance + 'Players.' + mediaDevice;
                             try {
                                 setObject(id, {_id: id, type: 'channel', common: {role: 'media', name: 'media'}, native: {}});
-                                await createAliasAsync(id + '.ALBUM', dpPath + '.Album', true, <iobJS.StateCommon> {type: 'string', role: 'media.album', name: 'ALBUM'});
-                                await createAliasAsync(id + '.ARTIST', dpPath + '.Artist', true, <iobJS.StateCommon> {type: 'string', role: 'media.artist', name: 'ARTIST'});
-                                await createAliasAsync(id + '.TITLE', dpPath + '.Title', true, <iobJS.StateCommon> {type: 'string', role: 'media.title', name: 'TITLE'});
-                                await createAliasAsync(id + '.NEXT', dpPath + '.btnForward', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.forward', name: 'NEXT'});
-                                await createAliasAsync(id + '.PREV', dpPath + '.btnRewind', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.reverse', name: 'PREV'});
-                                await createAliasAsync(id + '.PLAY', dpPath + '.state', true, <iobJS.StateCommon> {
+                                await createAliasAsync(id + '.ALBUM', dpPath + '.Album', true, {type: 'string', role: 'media.album', name: 'ALBUM'});
+                                await createAliasAsync(id + '.ARTIST', dpPath + '.Artist', true, {type: 'string', role: 'media.artist', name: 'ARTIST'});
+                                await createAliasAsync(id + '.TITLE', dpPath + '.Title', true, {type: 'string', role: 'media.title', name: 'TITLE'});
+                                await createAliasAsync(id + '.NEXT', dpPath + '.btnForward', true, {type: 'boolean', role: 'button.forward', name: 'NEXT'});
+                                await createAliasAsync(id + '.PREV', dpPath + '.btnRewind', true, {type: 'boolean', role: 'button.reverse', name: 'PREV'});
+                                await createAliasAsync(id + '.PLAY', dpPath + '.state', true, {
                                     type: 'boolean',
                                     role: 'media.state',
                                     name: 'PLAY',
                                     alias: {id: dpPath + '.state', read: 'val === 1 ? true : false'},
                                 });
-                                await createAliasAsync(id + '.PAUSE', dpPath + '.state', true, <iobJS.StateCommon> {
+                                await createAliasAsync(id + '.PAUSE', dpPath + '.state', true, {
                                     type: 'boolean',
                                     role: 'media.state',
                                     name: 'PAUSE',
                                     alias: {id: dpPath + '.state', read: 'val === 0 ? true : false'},
                                 });
-                                await createAliasAsync(id + '.STOP', dpPath + '.state', true, <iobJS.StateCommon> {
+                                await createAliasAsync(id + '.STOP', dpPath + '.state', true, {
                                     type: 'boolean',
                                     role: 'media.state',
                                     name: 'STOP',
                                     alias: {id: dpPath + '.state', read: 'val === 0 ? true : false'},
                                 });
-                                await createAliasAsync(id + '.STATE', dpPath + '.Power', true, <iobJS.StateCommon> {type: 'number', role: 'switch', name: 'STATE'});
-                                await createAliasAsync(id + '.VOLUME', dpPath + '.Volume', true, <iobJS.StateCommon> {type: 'number', role: 'level.volume', name: 'VOLUME'});
-                                await createAliasAsync(id + '.VOLUME_ACTUAL', dpPath + '.Volume', true, <iobJS.StateCommon> {type: 'number', role: 'value.volume', name: 'VOLUME_ACTUAL'});
-                                await createAliasAsync(id + '.SHUFFLE', dpPath + '.PlaylistShuffle', true, <iobJS.StateCommon> {type: 'string', role: 'media.mode.shuffle', name: 'SHUFFLE'});
-                                await createAliasAsync(id + '.REPEAT', dpPath + '.PlaylistRepeat', true, <iobJS.StateCommon> {type: 'number', role: 'media.mode.repeat', name: 'REPEAT'});
-                                await createAliasAsync(id + '.DURATION', dpPath + '.Duration', true, <iobJS.StateCommon> {type: 'string', role: 'media.duration', name: 'DURATION'});
-                                await createAliasAsync(id + '.ELAPSED', dpPath + '.Time', true, <iobJS.StateCommon> {type: 'string', role: 'media.elapsed', name: 'ELAPSED'});
+                                await createAliasAsync(id + '.STATE', dpPath + '.Power', true, {type: 'number', role: 'switch', name: 'STATE'});
+                                await createAliasAsync(id + '.VOLUME', dpPath + '.Volume', true, {type: 'number', role: 'level.volume', name: 'VOLUME'});
+                                await createAliasAsync(id + '.VOLUME_ACTUAL', dpPath + '.Volume', true, {type: 'number', role: 'value.volume', name: 'VOLUME_ACTUAL'});
+                                await createAliasAsync(id + '.SHUFFLE', dpPath + '.PlaylistShuffle', true, {type: 'string', role: 'media.mode.shuffle', name: 'SHUFFLE'});
+                                await createAliasAsync(id + '.REPEAT', dpPath + '.PlaylistRepeat', true, {type: 'number', role: 'media.mode.repeat', name: 'REPEAT'});
+                                await createAliasAsync(id + '.DURATION', dpPath + '.Duration', true, {type: 'string', role: 'media.duration', name: 'DURATION'});
+                                await createAliasAsync(id + '.ELAPSED', dpPath + '.Time', true, {type: 'string', role: 'media.elapsed', name: 'ELAPSED'});
                             } catch (err: any) {
                                 log('error at function createAutoMediaAlias Adapter Squeezebox: ' + err.message, 'warn');
                             }
@@ -6997,22 +7078,22 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
 
                             try {
                                 setObject(id, {_id: id, type: 'channel', common: {role: 'media', name: 'media'}, native: {}});
-                                await createAliasAsync(id + '.ACTUAL', dpPath + 'setvol', true, <iobJS.StateCommon> {type: 'number', role: 'value.volume', name: 'ACTUAL'});
-                                await createAliasAsync(id + '.ALBUM', dpPath + 'album', true, <iobJS.StateCommon> {type: 'string', role: 'media.album', name: 'ALBUM'});
-                                await createAliasAsync(id + '.ARTIST', dpPath + 'artist', true, <iobJS.StateCommon> {type: 'string', role: 'media.artist', name: 'ARTIST'});
-                                await createAliasAsync(id + '.TITLE', dpPath + 'title', true, <iobJS.StateCommon> {type: 'string', role: 'media.title', name: 'TITLE'});
-                                await createAliasAsync(id + '.NEXT', dpPath + 'next', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.next', name: 'NEXT'});
-                                await createAliasAsync(id + '.PREV', dpPath + 'previous', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.prev', name: 'PREV'});
-                                await createAliasAsync(id + '.PLAY', dpPath + 'play', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.play', name: 'PLAY'});
-                                await createAliasAsync(id + '.PAUSE', dpPath + 'pause', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
-                                await createAliasAsync(id + '.STOP', dpPath + 'stop', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.stop', name: 'STOP'});
-                                await createAliasAsync(id + '.STATE', dpPath + 'state', true, <iobJS.StateCommon> {type: 'string', role: 'media.state', name: 'STATE'});
-                                await createAliasAsync(id + '.VOLUME', dpPath + 'volume', true, <iobJS.StateCommon> {type: 'number', role: 'level.volume', name: 'VOLUME'});
-                                await createAliasAsync(id + '.REPEAT', dpPath + 'repeat', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.repeat', name: 'REPEAT'});
-                                await createAliasAsync(id + '.SINGLE', dpPath + 'single', true, <iobJS.StateCommon> {type: 'number', role: 'media', name: 'SINGLE'});
-                                await createAliasAsync(id + '.SHUFFLE', dpPath + 'random', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
-                                await createAliasAsync(id + '.DURATION', dpPath + 'current_duration', true, <iobJS.StateCommon> {type: 'string', role: 'media.duration.text', name: 'DURATION'});
-                                await createAliasAsync(id + '.ELAPSED', dpPath + 'current_elapsed', true, <iobJS.StateCommon> {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
+                                await createAliasAsync(id + '.ACTUAL', dpPath + 'setvol', true, {type: 'number', role: 'value.volume', name: 'ACTUAL'});
+                                await createAliasAsync(id + '.ALBUM', dpPath + 'album', true, {type: 'string', role: 'media.album', name: 'ALBUM'});
+                                await createAliasAsync(id + '.ARTIST', dpPath + 'artist', true, {type: 'string', role: 'media.artist', name: 'ARTIST'});
+                                await createAliasAsync(id + '.TITLE', dpPath + 'title', true, {type: 'string', role: 'media.title', name: 'TITLE'});
+                                await createAliasAsync(id + '.NEXT', dpPath + 'next', true, {type: 'boolean', role: 'button.next', name: 'NEXT'});
+                                await createAliasAsync(id + '.PREV', dpPath + 'previous', true, {type: 'boolean', role: 'button.prev', name: 'PREV'});
+                                await createAliasAsync(id + '.PLAY', dpPath + 'play', true, {type: 'boolean', role: 'button.play', name: 'PLAY'});
+                                await createAliasAsync(id + '.PAUSE', dpPath + 'pause', true, {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
+                                await createAliasAsync(id + '.STOP', dpPath + 'stop', true, {type: 'boolean', role: 'button.stop', name: 'STOP'});
+                                await createAliasAsync(id + '.STATE', dpPath + 'state', true, {type: 'string', role: 'media.state', name: 'STATE'});
+                                await createAliasAsync(id + '.VOLUME', dpPath + 'volume', true, {type: 'number', role: 'level.volume', name: 'VOLUME'});
+                                await createAliasAsync(id + '.REPEAT', dpPath + 'repeat', true, {type: 'boolean', role: 'media.mode.repeat', name: 'REPEAT'});
+                                await createAliasAsync(id + '.SINGLE', dpPath + 'single', true, {type: 'number', role: 'media', name: 'SINGLE'});
+                                await createAliasAsync(id + '.SHUFFLE', dpPath + 'random', true, {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
+                                await createAliasAsync(id + '.DURATION', dpPath + 'current_duration', true, {type: 'string', role: 'media.duration.text', name: 'DURATION'});
+                                await createAliasAsync(id + '.ELAPSED', dpPath + 'current_elapsed', true, {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
                             } catch (err: any) {
                                 log('error at function createAutoMediaAlias Adapter mpd: ' + err.message, 'warn');
                             }
@@ -7035,25 +7116,25 @@ async function createAutoMediaAlias (id: string, mediaDevice: string, adapterPla
                         try {
                             let dpPath: string = adapterPlayerInstance;
                             await extendObjectAsync(id, {_id: id, type: 'channel', common: {role: 'media', name: 'media'}, native: {}});
-                            await createAliasAsync(id + '.ACTUAL', dpPath + 'volume', true, <iobJS.StateCommon> {type: 'number', role: 'value.volume', name: 'ACTUAL'});
-                            await createAliasAsync(id + '.VOLUME', dpPath + 'volume', true, <iobJS.StateCommon> {type: 'number', role: 'level.volume', name: 'VOLUME'});
-                            await createAliasAsync(id + '.STATE', dpPath + 'on', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.state', name: 'STATE'});
+                            await createAliasAsync(id + '.ACTUAL', dpPath + 'volume', true, {type: 'number', role: 'value.volume', name: 'ACTUAL'});
+                            await createAliasAsync(id + '.VOLUME', dpPath + 'volume', true, {type: 'number', role: 'level.volume', name: 'VOLUME'});
+                            await createAliasAsync(id + '.STATE', dpPath + 'on', true, {type: 'boolean', role: 'media.state', name: 'STATE'});
 
                             dpPath = adapterPlayerInstance + 'nowPlaying';
-                            await createAliasAsync(id + '.ALBUM', dpPath + '.album', true, <iobJS.StateCommon> {type: 'string', role: 'media.album', name: 'ALBUM'});
-                            await createAliasAsync(id + '.ARTIST', dpPath + '.artist', true, <iobJS.StateCommon> {type: 'string', role: 'media.artist', name: 'ARTIST'});
-                            await createAliasAsync(id + '.TITLE', dpPath + '.track', true, <iobJS.StateCommon> {type: 'string', role: 'media.title', name: 'TITLE'});
-                            await createAliasAsync(id + '.DURATION', dpPath + '.total', true, <iobJS.StateCommon> {type: 'string', role: 'media.duration.text', name: 'DURATION'});
-                            await createAliasAsync(id + '.ELAPSED', dpPath + '.time', true, <iobJS.StateCommon> {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
-                            await createAliasAsync(id + '.REPEAT', dpPath + '.repeat', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.repeat', name: 'REPEAT'});
-                            await createAliasAsync(id + '.SHUFFLE', dpPath + '.shuffle', true, <iobJS.StateCommon> {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
+                            await createAliasAsync(id + '.ALBUM', dpPath + '.album', true, {type: 'string', role: 'media.album', name: 'ALBUM'});
+                            await createAliasAsync(id + '.ARTIST', dpPath + '.artist', true, {type: 'string', role: 'media.artist', name: 'ARTIST'});
+                            await createAliasAsync(id + '.TITLE', dpPath + '.track', true, {type: 'string', role: 'media.title', name: 'TITLE'});
+                            await createAliasAsync(id + '.DURATION', dpPath + '.total', true, {type: 'string', role: 'media.duration.text', name: 'DURATION'});
+                            await createAliasAsync(id + '.ELAPSED', dpPath + '.time', true, {type: 'string', role: 'media.elapsed.text', name: 'ELAPSED'});
+                            await createAliasAsync(id + '.REPEAT', dpPath + '.repeat', true, {type: 'boolean', role: 'media.mode.repeat', name: 'REPEAT'});
+                            await createAliasAsync(id + '.SHUFFLE', dpPath + '.shuffle', true, {type: 'boolean', role: 'media.mode.shuffle', name: 'SHUFFLE'});
 
                             dpPath = adapterPlayerInstance + 'keys';
-                            await createAliasAsync(id + '.NEXT', dpPath + '.NEXT_TRACK', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.next', name: 'NEXT'});
-                            await createAliasAsync(id + '.PREV', dpPath + '.PREV_TRACK', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.prev', name: 'PREV'});
-                            await createAliasAsync(id + '.PLAY', dpPath + '.PLAY', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.play', name: 'PLAY'});
-                            await createAliasAsync(id + '.PAUSE', dpPath + '.PAUSE', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
-                            await createAliasAsync(id + '.STOP', dpPath + '.STOP', true, <iobJS.StateCommon> {type: 'boolean', role: 'button.stop', name: 'STOP'});
+                            await createAliasAsync(id + '.NEXT', dpPath + '.NEXT_TRACK', true, {type: 'boolean', role: 'button.next', name: 'NEXT'});
+                            await createAliasAsync(id + '.PREV', dpPath + '.PREV_TRACK', true, {type: 'boolean', role: 'button.prev', name: 'PREV'});
+                            await createAliasAsync(id + '.PLAY', dpPath + '.PLAY', true, {type: 'boolean', role: 'button.play', name: 'PLAY'});
+                            await createAliasAsync(id + '.PAUSE', dpPath + '.PAUSE', true, {type: 'boolean', role: 'button.pause', name: 'PAUSE'});
+                            await createAliasAsync(id + '.STOP', dpPath + '.STOP', true, {type: 'boolean', role: 'button.stop', name: 'STOP'});
                         } catch (err: any) {
                             log('error at function createAutoMediaAlias Adapter bosesoundtouch: ' + err.message, 'warn');
                         }
@@ -7682,7 +7763,7 @@ function GenerateMediaPage (page: NSPanel.PageMedia): NSPanel.Payload[] {
                     'input_sel' + '~' + tid + '?tracklist' + '~' + Icons.GetIcon('animation-play-outline') + '~' + trackListIconCol + '~' + findLocale('media', 'tracklist') + '~' + 'media2~';
             }
 
-            //InSel EQ
+            // InSel/Slider EQ
             let equalizerListString: string = '~~~~~~';
             let equalizerListIconCol = rgb_dec565(HMIOff);
 
@@ -7860,11 +7941,11 @@ async function createAutoAlarmAlias (id: string, nsPath: string) {
                     await createStateAsync(nsPath + '.PIN_Failed', 0, {type: 'number', write: false});
                     await createStateAsync(nsPath + '.PANEL', NSPanel_Path, {type: 'string', write: false});
                     setObject(id, {_id: id, type: 'channel', common: {role: 'sensor.fire.alarm', name: 'alarm'}, native: {}});
-                    await createAliasAsync(id + '.ACTUAL', nsPath + '.AlarmState', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
-                    await createAliasAsync(id + '.PIN', nsPath + '.AlarmPin', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'PIN'});
-                    await createAliasAsync(id + '.TYPE', nsPath + '.AlarmType', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'TYPE'});
-                    await createAliasAsync(id + '.PIN_Failed', nsPath + '.PIN_Failed', true, <iobJS.StateCommon> {type: 'number', role: 'state', name: 'PIN_Failed'});
-                    await createAliasAsync(id + '.PANEL', nsPath + '.PANEL', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'PANEL'});
+                    await createAliasAsync(id + '.ACTUAL', nsPath + '.AlarmState', true, {type: 'string', role: 'state', name: 'ACTUAL'});
+                    await createAliasAsync(id + '.PIN', nsPath + '.AlarmPin', true, {type: 'string', role: 'state', name: 'PIN'});
+                    await createAliasAsync(id + '.TYPE', nsPath + '.AlarmType', true, {type: 'string', role: 'state', name: 'TYPE'});
+                    await createAliasAsync(id + '.PIN_Failed', nsPath + '.PIN_Failed', true, {type: 'number', role: 'state', name: 'PIN_Failed'});
+                    await createAliasAsync(id + '.PANEL', nsPath + '.PANEL', true, {type: 'string', role: 'state', name: 'PANEL'});
                 }
             }
         }
@@ -8060,8 +8141,8 @@ async function createAutoUnlockAlias (id: string, dpPath: string) {
                     await createStateAsync(dpPath + 'UnlockPin', '0000', {type: 'string', write: true});
                     await createStateAsync(dpPath + 'Access', 'false', {type: 'boolean', write: false});
                     setObject(id, {_id: id, type: 'channel', common: {role: 'sensor.fire.alarm', name: 'sensor.fire.alarm'}, native: {}});
-                    await createAliasAsync(id + '.PIN', dpPath + 'UnlockPin', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'PIN'});
-                    await createAliasAsync(id + '.ACTUAL', dpPath + 'Access', true, <iobJS.StateCommon> {type: 'boolean', role: 'sensor.fire.alarm', name: 'ACTUAL'});
+                    await createAliasAsync(id + '.PIN', dpPath + 'UnlockPin', true, {type: 'string', role: 'state', name: 'PIN'});
+                    await createAliasAsync(id + '.ACTUAL', dpPath + 'Access', true, {type: 'boolean', role: 'sensor.fire.alarm', name: 'ACTUAL'});
                 }
             }
         }
@@ -8167,11 +8248,11 @@ async function createAutoQRAlias (id: string, dpPath: string) {
         if (autoCreateAlias) {
             if (isSetOptionActive) {
                 if (existsState(dpPath + 'Daten') == false) {
-                    await createStateAsync(dpPath + 'Daten', 'WIFI:T:undefined;S:undefined;P:undefined;H:undefined;', <iobJS.StateCommon> {type: 'string', write: true});
-                    await createStateAsync(dpPath + 'Switch', false, <iobJS.StateCommon> {type: 'boolean', write: true});
+                    await createStateAsync(dpPath + 'Daten', 'WIFI:T:undefined;S:undefined;P:undefined;H:undefined;', {type: 'string', write: true});
+                    await createStateAsync(dpPath + 'Switch', false, {type: 'boolean', write: true});
                     setObject(id, {_id: id, type: 'channel', common: {role: 'switch.mode.wlan', name: 'QR Page'}, native: {}});
-                    await createAliasAsync(id + '.ACTUAL', dpPath + 'Daten', true, <iobJS.StateCommon> {type: 'string', role: 'state', name: 'ACTUAL'});
-                    await createAliasAsync(id + '.SWITCH', dpPath + 'Switch', true, <iobJS.StateCommon> {type: 'boolean', role: 'state', name: 'SWITCH'});
+                    await createAliasAsync(id + '.ACTUAL', dpPath + 'Daten', true, {type: 'string', role: 'state', name: 'ACTUAL'});
+                    await createAliasAsync(id + '.SWITCH', dpPath + 'Switch', true, {type: 'boolean', role: 'state', name: 'SWITCH'});
                     log('Adjust data for the QR page under ' + dpPath + 'data. Follow the instructions in the wiki.', 'warn');
                 }
             }
@@ -8211,7 +8292,7 @@ function GenerateQRPage (page: NSPanel.PageQR): NSPanel.Payload[] {
 
         let o = getObject(id);
 
-        let heading = page.heading !== undefined ? page.heading : o.common.name.de;
+        let heading = page.heading !== undefined ? page.heading : typeof o.common.name === 'object' ? o.common.name.de : o.common.name;
         let textQR = page.items[0].id + '.ACTUAL' !== undefined ? getState(page.items[0].id + '.ACTUAL').val : 'WIFI:T:undefined;S:undefined;P:undefined;H:undefined;';
         let hiddenPWD = false;
         if (page.items[0].hidePassword !== undefined && page.items[0].hidePassword == true) {
@@ -8391,7 +8472,7 @@ function GeneratePowerPage (page: NSPanel.PagePower): NSPanel.Payload[] {
             unsubscribePowerSubscriptions();
 
             let o = getObject(id);
-            heading = page.heading !== undefined ? page.heading : o.common.name.de;
+            heading = page.heading !== undefined ? page.heading : typeof o.common.name === 'object' ? o.common.name.de : o.common.name;
 
             obj = JSON.parse(getState(page.items[0].id + '.ACTUAL').val);
         }
@@ -8901,11 +8982,11 @@ function HandleButtonEvent (words: any): void {
                 break;
             case 'notifyAction':
                 if (words[4] == 'yes') {
-                    setState(popupNotifyInternalName, <iobJS.State> {val: words[2], ack: true});
-                    setState(popupNotifyAction, <iobJS.State> {val: true, ack: true});
+                    setState(popupNotifyInternalName, {val: words[2], ack: true});
+                    setState(popupNotifyAction, {val: true, ack: true});
                 } else if (words[4] == 'no') {
-                    setState(popupNotifyInternalName, <iobJS.State> {val: words[2], ack: true});
-                    setState(popupNotifyAction, <iobJS.State> {val: false, ack: true});
+                    setState(popupNotifyInternalName, {val: words[2], ack: true});
+                    setState(popupNotifyAction, {val: false, ack: true});
                 }
 
                 setIfExists(config.panelSendTopic, 'exitPopup');
@@ -9129,10 +9210,10 @@ function HandleButtonEvent (words: any): void {
                 break;
             case 'button1Press':
                 let pageItemShutterButton1 = findPageItem(id);
-                if (pageItemShutterButton1.customIcons[0].Button1.buttonType != undefined && pageItemShutterButton1.customIcons[0].Button1.buttonType == 'toggle') {
-                    toggleState(pageItemShutterButton1.customIcons[0].Button1.id);
-                } else if (pageItemShutterButton1.customIcons[0].Button1.buttonType != undefined && pageItemShutterButton1.customIcons[0].Button1.buttonType == 'press') {
-                    setIfExists(pageItemShutterButton1.customIcons[0].Button1.id, true);
+                if (pageItemShutterButton1.shutterIcons[0].buttonType != undefined && pageItemShutterButton1.shutterIcons[0].buttonType == 'toggle') {
+                    toggleState(pageItemShutterButton1.shutterIcons[0].id);
+                } else if (pageItemShutterButton1.shutterIcons[0].buttonType != undefined && pageItemShutterButton1.shutterIcons[0].buttonType == 'press') {
+                    setIfExists(pageItemShutterButton1.shutterIcons[0].id, true);
                 } else {
                     //do nothing
                 }
@@ -9140,10 +9221,10 @@ function HandleButtonEvent (words: any): void {
                 break;
             case 'button2Press':
                 let pageItemShutterButton2 = findPageItem(id);
-                if (pageItemShutterButton2.customIcons[0].Button2.buttonType != undefined && pageItemShutterButton2.customIcons[0].Button2.buttonType == 'toggle') {
-                    toggleState(pageItemShutterButton2.customIcons[0].Button2.id);
-                } else if (pageItemShutterButton2.customIcons[0].Button2.buttonType != undefined && pageItemShutterButton2.customIcons[0].Button2.buttonType == 'press') {
-                    setIfExists(pageItemShutterButton2.customIcons[0].Button2.id, true);
+                if (pageItemShutterButton2.shutterIcons[1].buttonType != undefined && pageItemShutterButton2.shutterIcons[1].buttonType == 'toggle') {
+                    toggleState(pageItemShutterButton2.shutterIcons[1].id);
+                } else if (pageItemShutterButton2.shutterIcons[1].buttonType != undefined && pageItemShutterButton2.shutterIcons[1].buttonType == 'press') {
+                    setIfExists(pageItemShutterButton2.shutterIcons[1].id, true);
                 } else {
                     //do nothing
                 }
@@ -9151,10 +9232,10 @@ function HandleButtonEvent (words: any): void {
                 break;
             case 'button3Press':
                 let pageItemShutterButton3 = findPageItem(id);
-                if (pageItemShutterButton3.customIcons[0].Button3.buttonType != undefined && pageItemShutterButton3.customIcons[0].Button3.buttonType == 'toggle') {
-                    toggleState(pageItemShutterButton3.customIcons[0].Button3.id);
-                } else if (pageItemShutterButton3.customIcons[0].Button3.buttonType != undefined && pageItemShutterButton3.customIcons[0].Button3.buttonType == 'press') {
-                    setIfExists(pageItemShutterButton3.customIcons[0].Button3.id, true);
+                if (pageItemShutterButton3.shutterIcons[2].buttonType != undefined && pageItemShutterButton3.shutterIcons[2].buttonType == 'toggle') {
+                    toggleState(pageItemShutterButton3.shutterIcons[2].id);
+                } else if (pageItemShutterButton3.shutterIcons[2].buttonType != undefined && pageItemShutterButton3.shutterIcons[2].buttonType == 'press') {
+                    setIfExists(pageItemShutterButton3.shutterIcons[2].id, true);
                 } else {
                     //do nothing
                 }
@@ -10301,6 +10382,7 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                             if (existsState(id + '.HUE') && existsState(id + '.TEMPERATURE') && pageItem.interpolateColor) {
                                 RegisterDetailEntityWatcher(id + '.HUE', pageItem, type, placeId);
                                 RegisterDetailEntityWatcher(id + '.TEMPERATURE', pageItem, type, placeId);
+                                //@ts-ignore
                                 if (getState(id + '.TEMPERATURE').ts < getState(id + '.HUE').ts) {
                                     if (Debug) log('HUE wurde zuletzt geändert - Lampe ist Color-Mode')
                                     let huecolor = hsv2rgb(getState(id + '.HUE').val, 1, 1);
@@ -10330,7 +10412,7 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
 
                             let colorTemp: any;
                             if (existsState(id + '.TEMPERATURE')) {
-                                colorTemp = 0;
+                                colorTemp = 'enable';
                                 if (getState(id + '.TEMPERATURE').val != null) {
                                     if (pageItem.minValueColorTemp !== undefined && pageItem.maxValueColorTemp !== undefined) {
                                         colorTemp = Math.trunc(scale(getState(id + '.TEMPERATURE').val, pageItem.maxValueColorTemp, pageItem.minValueColorTemp, 100, 0));
@@ -10418,6 +10500,7 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                             if (existsState(id + '.RED') && existsState(id + '.TEMPERATURE') && pageItem.interpolateColor) {
                                 RegisterDetailEntityWatcher(id + '.RED', pageItem, type, placeId);
                                 RegisterDetailEntityWatcher(id + '.TEMPERATURE', pageItem, type, placeId);
+                                //@ts-ignore
                                 if (getState(id + '.TEMPERATURE').ts < getState(id + '.RED').ts) {
                                     if (Debug) log('RGB wurde zuletzt geändert - Lampe ist Color-Mode')
                                     let rgb: RGB = {red: Math.round(getState(id + '.RED').val), green: Math.round(getState(id + '.GREEN').val), blue: Math.round(getState(id + '.BLUE').val)};
@@ -10531,6 +10614,7 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                             if (existsState(id + '.RGB') && existsState(id + '.TEMPERATURE') && pageItem.interpolateColor) {
                                 RegisterDetailEntityWatcher(id + '.RGB', pageItem, type, placeId);
                                 RegisterDetailEntityWatcher(id + '.TEMPERATURE', pageItem, type, placeId);
+                                //@ts-ignore
                                 if (getState(id + '.TEMPERATURE').ts < getState(id + '.RGB').ts) {
                                     if (Debug) log('RGB wurde zuletzt geändert - Lampe ist Color-Mode')
                                     let hex = getState(id + '.RGB').val;
@@ -10648,6 +10732,7 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                             if (existsState(id + '.CIE') && existsState(id + '.TEMPERATURE') && pageItem.interpolateColor) {
                                 RegisterDetailEntityWatcher(id + '.CIE', pageItem, type, placeId);
                                 RegisterDetailEntityWatcher(id + '.TEMPERATURE', pageItem, type, placeId);
+                                //@ts-ignore
                                 if (getState(id + '.TEMPERATURE').ts < getState(id + '.CIE').ts) {
                                     if (Debug) log('CIE wurde zuletzt geändert - Lampe ist Color-Mode')
                                     let cie: string = getState(id + '.CIE').val;
@@ -11085,62 +11170,62 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
 
                 let tempId = placeId != undefined ? placeId : id;
 
-                //CustomIcons - Button1
+                //shutterIcons - Button1
                 let bEntity1State : boolean = false;
                 let bEntity1Icon : string = 'power';
                 let bEntity1Color : number = rgb_dec565(White);
                 let bEntity1Visibility : string = 'disable';
-                if (pageItem.customIcons[0].Button1 != undefined) {
-                    if (pageItem.customIcons[0].Button1.id != undefined) {
+                if (pageItem.shutterIcons && pageItem.shutterIcons[0] != undefined) {
+                    if (pageItem.shutterIcons[0].id != undefined) {
                         bEntity1Visibility = 'enable';
-                        RegisterDetailEntityWatcher(pageItem.customIcons[0].Button1.id, pageItem, type, placeId);
-                        bEntity1State = getState(pageItem.customIcons[0].Button1.id).val;
+                        RegisterDetailEntityWatcher(pageItem.shutterIcons[0].id, pageItem, type, placeId);
+                        bEntity1State = getState(pageItem.shutterIcons[0].id).val;
                         if (bEntity1State) {
-                            bEntity1Icon = Icons.GetIcon(pageItem.customIcons[0].Button1.icon) ?? bEntity1Icon;
-                            bEntity1Color = rgb_dec565(pageItem.customIcons[0].Button1.iconOnColor) ?? bEntity1Color;
+                            bEntity1Icon = Icons.GetIcon(pageItem.shutterIcons[0].icon) ?? bEntity1Icon;
+                            bEntity1Color = rgb_dec565(pageItem.shutterIcons[0].iconOnColor) ?? bEntity1Color;
                         } else {
-                            bEntity1Icon = Icons.GetIcon(pageItem.customIcons[0].Button1.icon2) ?? bEntity1Icon;
-                            bEntity1Color = rgb_dec565(pageItem.customIcons[0].Button1.iconOffColor) ?? bEntity1Color;
+                            bEntity1Icon = Icons.GetIcon(pageItem.shutterIcons[0].icon2) ?? bEntity1Icon;
+                            bEntity1Color = rgb_dec565(pageItem.shutterIcons[0].iconOffColor) ?? bEntity1Color;
                         }
                     }
                 }
 
-                //CustomIcons - Button2
+                //shutterIcons - Button2
                 let bEntity2State : boolean = false;
                 let bEntity2Icon : string = 'power';
                 let bEntity2Color : number = rgb_dec565(White);
                 let bEntity2Visibility : string = 'disable';
-                if (pageItem.customIcons[0].Button2 != undefined) {
-                    if (pageItem.customIcons[0].Button2.id != undefined) {
+                if (pageItem.shutterIcons && pageItem.shutterIcons[1] != undefined) {
+                    if (pageItem.shutterIcons[1].id != undefined) {
                         bEntity2Visibility = 'enable';
-                        RegisterDetailEntityWatcher(pageItem.customIcons[0].Button2.id, pageItem, type, placeId);
-                        bEntity2State = getState(pageItem.customIcons[0].Button2.id).val;
+                        RegisterDetailEntityWatcher(pageItem.shutterIcons[1].id, pageItem, type, placeId);
+                        bEntity2State = getState(pageItem.shutterIcons[1].id).val;
                         if (bEntity2State) {
-                            bEntity2Icon = Icons.GetIcon(pageItem.customIcons[0].Button2.icon) ?? bEntity2Icon;
-                            bEntity2Color = rgb_dec565(pageItem.customIcons[0].Button2.iconOnColor) ?? bEntity2Color;
+                            bEntity2Icon = Icons.GetIcon(pageItem.shutterIcons[1].icon) ?? bEntity2Icon;
+                            bEntity2Color = rgb_dec565(pageItem.shutterIcons[1].iconOnColor) ?? bEntity2Color;
                         } else {
-                            bEntity2Icon = Icons.GetIcon(pageItem.customIcons[0].Button2.icon2) ?? bEntity2Icon;
-                            bEntity2Color = rgb_dec565(pageItem.customIcons[0].Button2.iconOffColor) ?? bEntity2Color;
+                            bEntity2Icon = Icons.GetIcon(pageItem.shutterIcons[1].icon2) ?? bEntity2Icon;
+                            bEntity2Color = rgb_dec565(pageItem.shutterIcons[1].iconOffColor) ?? bEntity2Color;
                         }
                     }
                 }
 
-                //CustomIcons - Button3
+                //shutterIcons - Button3
                 let bEntity3State : boolean = false;
                 let bEntity3Icon : string = 'power';
                 let bEntity3Color : number = rgb_dec565(White);
                 let bEntity3Visibility : string = 'disable';
-                if (pageItem.customIcons[0].Button3 != undefined) {
-                    if (pageItem.customIcons[0].Button3.id != undefined) {
+                if (pageItem.shutterIcons && pageItem.shutterIcons[2] != undefined) {
+                    if (pageItem.shutterIcons[2].id != undefined) {
                         bEntity3Visibility = 'enable';
-                        RegisterDetailEntityWatcher(pageItem.customIcons[0].Button3.id, pageItem, type, placeId);
-                        bEntity3State = getState(pageItem.customIcons[0].Button3.id).val;
+                        RegisterDetailEntityWatcher(pageItem.shutterIcons[2].id, pageItem, type, placeId);
+                        bEntity3State = getState(pageItem.shutterIcons[2].id).val;
                         if (bEntity3State) {
-                            bEntity3Icon = Icons.GetIcon(pageItem.customIcons[0].Button3.icon) ?? bEntity3Icon;
-                            bEntity3Color = rgb_dec565(pageItem.customIcons[0].Button3.iconOnColor) ?? bEntity3Color;
+                            bEntity3Icon = Icons.GetIcon(pageItem.shutterIcons[2].icon) ?? bEntity3Icon;
+                            bEntity3Color = rgb_dec565(pageItem.shutterIcons[2].iconOnColor) ?? bEntity3Color;
                         } else {
-                            bEntity3Icon = Icons.GetIcon(pageItem.customIcons[0].Button3.icon2) ?? bEntity3Icon;
-                            bEntity3Color = rgb_dec565(pageItem.customIcons[0].Button3.iconOffColor) ?? bEntity3Color;
+                            bEntity3Icon = Icons.GetIcon(pageItem.shutterIcons[2].icon2) ?? bEntity3Icon;
+                            bEntity3Color = rgb_dec565(pageItem.shutterIcons[2].iconOffColor) ?? bEntity3Color;
                         }
                     }
                 }
@@ -11148,6 +11233,13 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                 let shutterTyp = 'shutter';
                 if (pageItem.shutterType != undefined) {
                     shutterTyp = pageItem.shutterType;
+                }
+
+                let shutterZeroIsClosed:string = "0";
+                if (pageItem.shutterZeroIsClosed != undefined) {
+                    if(pageItem.shutterZeroIsClosed==true) {
+                        shutterZeroIsClosed = "1";
+                    }
                 }
 
                 out_msgs.push({
@@ -11175,7 +11267,7 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                         icon_stop_status +
                         '~' + //{icon_stop_status}~
                         icon_down_status +
-                        //CustomIcons
+                        //shutterIcons
                         //bEntity1
                         '~' +
                         bEntity1Icon + //12
@@ -11198,7 +11290,9 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                         '~' +
                         bEntity3Visibility + //20
                         '~' +
-                        shutterTyp //21 for Future
+                        shutterTyp +//21 for Future
+                        '~' +
+                        shutterZeroIsClosed //21 for Future
                 });
             }
 
@@ -11644,8 +11738,8 @@ function GenerateDetailPage (type: NSPanel.PopupType, optional: NSPanel.mediaOpt
                                 existsObject(NSPanel_Path + 'Media.Player.' + lastIndex + '.EQ.activeMode') == false ||
                                 existsObject(NSPanel_Path + 'Media.Player.' + lastIndex + '.Speaker') == false
                             ) {
-                                createState(NSPanel_Path + 'Media.Player.' + lastIndex + '.EQ.activeMode', <iobJS.StateCommon> {type: 'string', write: false});
-                                createState(NSPanel_Path + 'Media.Player.' + lastIndex + '.Speaker', <iobJS.StateCommon> {type: 'string', write: false});
+                                createState(NSPanel_Path + 'Media.Player.' + lastIndex + '.EQ.activeMode', {type: 'string', write: false});
+                                createState(NSPanel_Path + 'Media.Player.' + lastIndex + '.Speaker', {type: 'string', write: false});
                             }
 
                             actualState = '';
@@ -11808,6 +11902,7 @@ function scale (number: number, inMin: number, inMax: number, outMin: number, ou
 function UnsubscribeWatcher (): void {
     try {
         for (const [key, value] of Object.entries(subscriptions)) {
+            //@ts-ignore
             unsubscribe(value);
             delete subscriptions[key];
         }
@@ -11866,7 +11961,7 @@ function HandleScreensaverUpdate (): void {
                     RegisterScreensaverEntityWatcher(config.weatherEntity + '.ACTUAL');
                 } else {
                     if (existsState(config.weatherEntity + '.TEMP')) {
-                        temperature = getState(config.weatherEntity + '.TEMP').val;
+                        temperature = String(Math.round(getState(config.weatherEntity + '.TEMP').val * 10)/10);
                     } else {
                         ('null');
                     }
@@ -11880,6 +11975,9 @@ function HandleScreensaverUpdate (): void {
                 } else if (weatherAdapterInstance == 'accuweather.' + weatherAdapterInstanceNumber + '.') {
                     entityIcon = Icons.GetIcon(GetAccuWeatherIcon(parseInt(icon)));
                     entityIconCol = GetAccuWeatherIconColor(parseInt(icon));
+                } else if (weatherAdapterInstance == 'openweathermap.' + weatherAdapterInstanceNumber + '.') {
+                    entityIcon = Icons.GetIcon(GetOpenWeatherMapIcon(icon));
+                    entityIconCol = GetOpenWeatherMapIconColor(icon);
                 }
 
                 payloadString += '~' + '~' + entityIcon + '~' + entityIconCol + '~' + '~' + optionalValue + '~';
@@ -11975,11 +12073,12 @@ function HandleScreensaverUpdate (): void {
                 }
 
                 for (let i = 1; i < maxEntities; i++) {
+                    
                     let TempMin = 0;
                     let TempMax = 0;
-                    let DayOfWeek = 0;
+                    let DayOfWeek: any = 0;
                     let WeatherIcon = '0';
-                    let WheatherColor = 0;
+                    let WheatherColor: any = 0;
 
                     if (weatherAdapterInstance == 'daswetter.' + weatherAdapterInstanceNumber + '.') {
                         TempMin = getState('daswetter.' + weatherAdapterInstanceNumber + '.NextDays.Location_1.Day_' + i + '.Minimale_Temperatur_value').val;
@@ -12016,6 +12115,33 @@ function HandleScreensaverUpdate (): void {
                             RegisterScreensaverEntityWatcher('accuweather.' + weatherAdapterInstanceNumber + '.Summary.DayOfWeek_d' + i);
                             RegisterScreensaverEntityWatcher('accuweather.' + weatherAdapterInstanceNumber + '.Summary.WeatherIcon_d' + i);
                         }
+                    } else if (weatherAdapterInstance == 'openweathermap.' + weatherAdapterInstanceNumber + '.') {
+                        if (i < 6) {
+                        
+                            //Maximal 5 Tage bei openweathermap
+                            TempMin = existsObject('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.temperatureMin')
+                                ? Math.round(getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.temperatureMin').val * 10) / 10
+                                : 0;
+                            TempMax = existsObject('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.temperatureMax')
+                                ? Math.round(getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.temperatureMax').val * 10) / 10
+                                : 0;
+                            //openweathermap.0.forecast.day0.date
+                            //log(formatDate(getDateObject(getState('openweathermap.0.forecast.day0.date').val), 'W', 'de'),'info');
+                            DayOfWeek = existsObject('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.date')
+                                ? formatDate(getDateObject(getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.date').val), 'W', 'de')
+                                : 0;
+                            WeatherIcon = existsObject('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.icon')
+                                ? GetOpenWeatherMapIcon((getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.icon').val).split('/').pop().split('.').shift())
+                                : '';
+                            WheatherColor = existsObject('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.icon')
+                                ? GetOpenWeatherMapIconColor(String(getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.icon').val).split('/').pop().split('.').shift())
+                                : 0;
+
+                            RegisterScreensaverEntityWatcher('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.temperatureMin');
+                            RegisterScreensaverEntityWatcher('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.temperatureMax');
+                            RegisterScreensaverEntityWatcher('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.date');
+                            RegisterScreensaverEntityWatcher('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.day' + String(i-1) + '.icon');
+                        }
                     }
 
                     let tempMinMaxString: string = '';
@@ -12035,6 +12161,32 @@ function HandleScreensaverUpdate (): void {
                         arraySunEvent[0] = getDateObject(getState('accuweather.' + weatherAdapterInstanceNumber + '.Daily.Day1.Sunrise').val).getTime();
                         arraySunEvent[1] = getDateObject(getState('accuweather.' + weatherAdapterInstanceNumber + '.Daily.Day1.Sunset').val).getTime();
                         arraySunEvent[2] = getDateObject(getState('accuweather.' + weatherAdapterInstanceNumber + '.Daily.Day2.Sunrise').val).getTime();
+
+                        let j = 0;
+                        for (j = 0; j < 3; j++) {
+                            if (arraySunEvent[j] > valDateNow) {
+                                nextSunEvent = j;
+                                break;
+                            }
+                        }
+                        let sun = '';
+                        if (j == 1) {
+                            sun = 'weather-sunset-down';
+                        } else {
+                            sun = 'weather-sunset-up';
+                        }
+
+                        payloadString += '~' + '~' + Icons.GetIcon(sun) + '~' + rgb_dec565(MSYellow) + '~' + 'Sonne' + '~' + formatDate(getDateObject(arraySunEvent[nextSunEvent]), 'hh:mm') + '~';
+                    } else if (weatherAdapterInstance == 'openweathermap.' + weatherAdapterInstanceNumber + '.' && i == 6) {
+                        let nextSunEvent = 0;
+                        let valDateNow = new Date().getTime();
+                        let arraySunEvent: number[] = [];
+                        //openweathermap.0.forecast.current.sunrise
+                        //openweathermap.0.forecast.current.sunset
+                        //no Sunset for Next day
+                        arraySunEvent[0] = getDateObject(getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.sunrise').val).getTime();
+                        arraySunEvent[1] = getDateObject(getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.sunset').val).getTime();
+                        arraySunEvent[2] = getDateObject(getState('openweathermap.' + weatherAdapterInstanceNumber + '.forecast.current.sunrise').val).getTime();
 
                         let j = 0;
                         for (j = 0; j < 3; j++) {
@@ -12910,6 +13062,118 @@ function GetDasWetterIconColor (icon: number): number {
     return 0;
 }
 
+/**
+ * Retrieves the AccuWeather icon string based on the provided icon number.
+ * 
+ * This function maps the given AccuWeather icon number to its corresponding icon string representation.
+ * 
+ * @function GetAccuWeatherIcon
+ * @param {number} icon - The AccuWeather icon number.
+ * @returns {string} The corresponding icon string.
+ */
+function GetOpenWeatherMapIcon (icon: string): string {
+    try {
+        switch (icon) {
+            /*
+            01d.png 	return rgb_dec565(swSunny);
+            01n.png 	return rgb_dec565(swClearNight);
+            02d.png 	02n.png 	few clouds*
+            03d.png 	03n.png 	scattered clouds
+            04d.png 	04n.png 	broken clouds
+            09d.png 	09n.png 	shower rain
+            10d.png 	10n.png 	rain*
+            11d.png 	11n.png 	thunderstorm
+            13d.png 	13n.png 	snow
+            50d.png 	50n.png 	mist
+            */
+
+            case "01d":
+                return 'weather-sunny';
+            case "01n":
+                return 'weather-night';
+            case "02d": //few clouds day
+                return 'weather-partly-cloudy';
+            case "02n": //few clouds night
+                return 'weather-night-partly-cloudy';
+            case "03d": //scattered clouds
+            case "03n":
+                return 'weather-cloudy';
+            case "04d": // cloudy
+            case "04n":
+                return 'weather-cloudy'; 
+            case "09d": //shower rain 
+            case "09n":
+                return 'weather-rainy';
+            case "10d": //rain 
+            case "10n":
+                return 'weather-pouring';
+            case "11d": //Thunderstorm 
+            case "11n":
+                return 'weather-lightning';
+            case "13d": //snow 
+            case "13n":
+                return 'weather-snowy';
+            case "50d": //mist 
+            case "50n":
+                return 'weather-fog';
+            default:
+                return 'alert-circle-outline';
+        }
+    } catch (err: any) {
+        log('error at function GetAccuWeatherIcon: ' + err.message, 'warn');
+    }
+    return '';
+}
+
+/**
+ * Retrieves the color code for a given AccuWeather icon number.
+ * 
+ * This function maps the provided AccuWeather icon number to its corresponding color code.
+ * 
+ * @function GetAccuWeatherIconColor
+ * @param {number} icon - The AccuWeather icon number.
+ * @returns {number} The corresponding color code.
+ */
+function GetOpenWeatherMapIconColor (icon: string): number {
+    try {
+        switch (icon) {
+            case "01d": //clear sky day
+                return rgb_dec565(swSunny);
+            case "01n": //clear sky night
+                return rgb_dec565(swClearNight);
+            case "02d": //few clouds day
+            case "02n": //few clouds night
+                return rgb_dec565(swPartlycloudy);
+            case "03d": //scattered clouds
+            case "03n":
+                return rgb_dec565(swCloudy);
+            case "04d": //broken clouds
+            case "04n":
+                return rgb_dec565(swCloudy);
+            case "09d": //shower rain 
+            case "09n":
+                return rgb_dec565(swRainy);
+            case "10d": //rain 
+            case "10n":
+                return rgb_dec565(swPouring);
+            case "11d": //Thunderstorm 
+            case "11n":
+                return rgb_dec565(swLightningRainy);
+            case "13d": //snow 
+            case "13n":
+                return rgb_dec565(swSnowy);
+            case "50d": //mist 
+            case "50n":
+                return rgb_dec565(swFog);
+            default:
+                return rgb_dec565(White);
+        }
+    } catch (err: any) {
+        log('error at function GetAccuWeatherIconColor: ' + err.message, 'warn');
+    }
+    return 0;
+}
+
 //------------------Begin Read Internal Sensor Data
 //mqttCallback (topic: string, message: string): Promise<void> {
 /**
@@ -12926,18 +13190,18 @@ on({id: config.panelRecvTopic.substring(0, config.panelRecvTopic.length - 'RESUL
     try {
         const Tasmota_Sensor = JSON.parse(obj.state.val);
 
-        await createStateAsync(NSPanel_Path + 'Sensor.Time', <iobJS.StateCommon> {type: 'string', write: false});
-        await createStateAsync(NSPanel_Path + 'Sensor.TempUnit', <iobJS.StateCommon> {type: 'string', write: false});
-        await createStateAsync(NSPanel_Path + 'Sensor.ANALOG.Temperature', <iobJS.StateCommon> {type: 'number', unit: '°C', write: false});
-        await createStateAsync(NSPanel_Path + 'Sensor.ESP32.Temperature', <iobJS.StateCommon> {type: 'number', unit: '°C', write: false});
+        await createStateAsync(NSPanel_Path + 'Sensor.Time', {type: 'string', write: false});
+        await createStateAsync(NSPanel_Path + 'Sensor.TempUnit', {type: 'string', write: false});
+        await createStateAsync(NSPanel_Path + 'Sensor.ANALOG.Temperature', {type: 'number', unit: '°C', write: false});
+        await createStateAsync(NSPanel_Path + 'Sensor.ESP32.Temperature', {type: 'number', unit: '°C', write: false});
         let dateTime: string = Tasmota_Sensor.Time.split('T');
-        await setStateAsync(NSPanel_Path + 'Sensor.Time', <iobJS.State> {val: dateTime[0] + '\r\n' + dateTime[1], ack: true});
-        await setStateAsync(NSPanel_Path + 'Sensor.TempUnit', <iobJS.State> {val: '°' + Tasmota_Sensor.TempUnit, ack: true});
+        await setStateAsync(NSPanel_Path + 'Sensor.Time', {val: dateTime[0] + '\r\n' + dateTime[1], ack: true});
+        await setStateAsync(NSPanel_Path + 'Sensor.TempUnit', {val: '°' + Tasmota_Sensor.TempUnit, ack: true});
 
         /* Some messages do not include temperature values, so catch ecxeption for them separately */
         try {
-            await setStateAsync(NSPanel_Path + 'Sensor.ANALOG.Temperature', <iobJS.State> {val: parseFloat(Tasmota_Sensor.ANALOG.Temperature1), ack: true});
-            await setStateAsync(NSPanel_Path + 'Sensor.ESP32.Temperature', <iobJS.State> {val: parseFloat(Tasmota_Sensor.ESP32.Temperature), ack: true});
+            await setStateAsync(NSPanel_Path + 'Sensor.ANALOG.Temperature', {val: parseFloat(Tasmota_Sensor.ANALOG.Temperature1), ack: true});
+            await setStateAsync(NSPanel_Path + 'Sensor.ESP32.Temperature', {val: parseFloat(Tasmota_Sensor.ESP32.Temperature), ack: true});
         } catch (e) {
             /* Nothing to do */
         }
@@ -12947,10 +13211,10 @@ on({id: config.panelRecvTopic.substring(0, config.panelRecvTopic.length - 'RESUL
             setObject(AliasPath + 'Sensor.ESP32.Temperature', {type: 'channel', common: {role: 'info', name: ''}, native: {}});
             setObject(AliasPath + 'Sensor.Time', {type: 'channel', common: {role: 'info', name: ''}, native: {}});
             setObject(AliasPath + 'Sensor.TempUnit', {type: 'channel', common: {role: 'info', name: ''}, native: {}});
-            await createAliasAsync(AliasPath + 'Sensor.ANALOG.Temperature.ACTUAL', NSPanel_Path + 'Sensor.ANALOG.Temperature', true, <iobJS.StateCommon> {type: 'number', unit: '°C'});
-            await createAliasAsync(AliasPath + 'Sensor.ESP32.Temperature.ACTUAL', NSPanel_Path + 'Sensor.ESP32.Temperature', true, <iobJS.StateCommon> {type: 'number', unit: '°C'});
-            await createAliasAsync(AliasPath + 'Sensor.Time.ACTUAL', NSPanel_Path + 'Sensor.Time', true, <iobJS.StateCommon> {type: 'string'});
-            await createAliasAsync(AliasPath + 'Sensor.TempUnit.ACTUAL', NSPanel_Path + 'Sensor.TempUnit', true, <iobJS.StateCommon> {type: 'string'});
+            await createAliasAsync(AliasPath + 'Sensor.ANALOG.Temperature.ACTUAL', NSPanel_Path + 'Sensor.ANALOG.Temperature', true, {type: 'number', unit: '°C'});
+            await createAliasAsync(AliasPath + 'Sensor.ESP32.Temperature.ACTUAL', NSPanel_Path + 'Sensor.ESP32.Temperature', true, {type: 'number', unit: '°C'});
+            await createAliasAsync(AliasPath + 'Sensor.Time.ACTUAL', NSPanel_Path + 'Sensor.Time', true, {type: 'string'});
+            await createAliasAsync(AliasPath + 'Sensor.TempUnit.ACTUAL', NSPanel_Path + 'Sensor.TempUnit', true, {type: 'string'});
         }
     } catch (err: any) {
         log('error Trigger reading senor-data: ' + err.message, 'warn');
@@ -13624,6 +13888,7 @@ function isPopupType (F: NSPanel.PopupType | string): F is NSPanel.PopupType {
         case 'popupThermo':
         case 'popupTimer':
         case 'popupSlider':
+        case 'popupColor':
             return true;
         default:
             log(`Please report to developer: Unknown NSPanel.PopupType: ${F} `, 'warn');
@@ -13650,7 +13915,7 @@ function isPagePower (F: NSPanel.PageType | NSPanel.PagePower): F is NSPanel.Pag
 }
 
 namespace NSPanel {
-    export type PopupType = 'popupFan' | 'popupInSel' | 'popupLight' | 'popupNotify' | 'popupShutter' | 'popupShutter2' | 'popupSlider' | 'popupThermo' | 'popupTimer';
+    export type PopupType = 'popupFan' | 'popupInSel' | 'popupLight' | 'popupNotify' | 'popupShutter' | 'popupShutter2' | 'popupSlider' | 'popupThermo' | 'popupTimer' | 'popupColor';
 
     export type EventMethod = 'startup' | 'sleepReached' | 'pageOpenDetail' | 'buttonPress2' | 'renderCurrentPage' | 'button1' | 'button2';
     export type panelRecvType = {
@@ -13703,7 +13968,8 @@ namespace NSPanel {
         | 'switch.mode.wlan'
         | 'media'
         | 'timeTable'
-        | 'airCondition';
+        | 'airCondition'
+        | 'illuminance';
 
     export type ButtonActionType =
         | 'bExit'
@@ -13974,11 +14240,22 @@ namespace NSPanel {
         inSel_ChoiceState?: boolean;
         iconArray?: string[];
         customIcons?: any[];
+        shutterIcons?: [ shutterIcons?, shutterIcons?, shutterIcons?] | null;
         fontSize?: number;
         actionStringArray?: string[];
         alwaysOnDisplay?: boolean;
         popupVersion?: number;
         shutterType?: string;
+        shutterZeroIsClosed?: boolean;
+    };
+
+    type shutterIcons = {
+        id: string;
+        icon: string;
+        icon2?: string;
+        iconOnColor?: RGB;
+        iconOffColor?: RGB; 
+        buttonType: string;
     };
 
     export type DimMode = {
@@ -13994,8 +14271,8 @@ namespace NSPanel {
         page: PageThermo | PageMedia | PageAlarm | PageQR | PageEntities | PageSchedule | PageGrid | PageGrid2 | PageGrid3 | PagePower | PageChart | PageUnlock | null;
         entity: string | null;
         setValue: string | number | boolean | null;
-        setOn?: {dp: string; val: iobJS.StateValue};
-        setOff?: {dp: string; val: iobJS.StateValue};
+        setOn?: {dp: string; val: any};
+        setOff?: {dp: string; val: any};
     };
 
     export type Config = {
