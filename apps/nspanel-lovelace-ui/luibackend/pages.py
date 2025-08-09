@@ -309,6 +309,11 @@ class LuiPagesGen(object):
             unit_of_measurement = entity.attributes.get("unit_of_measurement", "")
             value = entity.state
 
+            try:
+                value = str(round(float(value), 1))
+            except:
+                print("An exception occurred") 
+                
             # limit value to 4 chars on us-p
             if self._config.get("model") == "us-p" and cardType == "cardEntities":
                 value = entity.state[:4]
@@ -382,15 +387,21 @@ class LuiPagesGen(object):
         elif entityType == "weather":
             entityTypePanel = "text"
             unit = get_attr_safe(entity, "temperature_unit", "")
+            rt = None
+            if type(item.stype) == str and ":" in item.stype and len(item.stype.split(":")) == 2:
+                spintstr = item.stype.split(":")
+                rt = spintstr[0]
+                item.stype = int(spintstr[1])
             if type(item.stype) == int:
                 bits = get_attr_safe(entity, "supported_features", 0b0)
-                rt = "daily"
-                if bits & 0b001: #FORECAST_DAILY
+                if not rt:
                     rt = "daily"
-                elif bits & 0b010: #FORECAST_HOURLY
-                    rt = "hourly"
-                elif bits & 0b100: #FORECAST_TWICE_DAILY
-                    rt = "twice_daily"
+                    if bits & 0b001: #FORECAST_DAILY
+                        rt = "daily"
+                    elif bits & 0b010: #FORECAST_HOURLY
+                        rt = "hourly"
+                    elif bits & 0b100: #FORECAST_TWICE_DAILY
+                        rt = "twice_daily"
 
                 results = apis.ha_api.call_service(
                     "weather/get_forecasts", target={"entity_id": entityId}, service_data={"type": rt}
@@ -1082,4 +1093,5 @@ class LuiPagesGen(object):
     def send_message_page(self, ident, heading, msg, b1, b2):
         self._send_mqtt_msg(f"pageType~popupNotify")
         self._send_mqtt_msg(f"entityUpdateDetail~{ident}~{heading}~65535~{b1}~65535~{b2}~65535~{msg}~65535~0")
+
 
