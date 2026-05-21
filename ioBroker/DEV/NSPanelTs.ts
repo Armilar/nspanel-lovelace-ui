@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------------
-TypeScript v5.1.1.7 zur Steuerung des SONOFF NSPanel mit dem ioBroker by @Armilar / @TT-Tom / @ticaki / @Britzelpuf / @Sternmiere / @ravenS0ne
-- abgestimmt auf TFT 61 / v5.1.1 (v5.1.2 us-p) / BerryDriver 10 / Tasmota 15.3.0
+TypeScript v5.1.1.9 zur Steuerung des SONOFF NSPanel mit dem ioBroker by @Armilar / @TT-Tom / @ticaki / @Britzelpuf / @Sternmiere / @ravenS0ne
+- abgestimmt auf TFT 61 / v5.1.1 (v5.1.3 us-p) / BerryDriver 10 / Tasmota 15.4.0
 
 Projekt:
 https://github.com/joBr99/nspanel-lovelace-ui/tree/main/ioBroker
@@ -106,6 +106,8 @@ ReleaseNotes:
 		- 29.03.2026 - v5.1.1.5  Fix DasWetter (meteored/Adapter Refactoring) and [BUG] Type at createEntity #1426
         - 31.03.2026 - v5.1.1.6  Refresh on cardPower not working in ioBroker/NsPanelTs.tst #1428 
         - 12.04.2026 - v5.5.1.7  Sonos: speakerlist and group volume not implemented #1434 by Smokey7672
+        - 24.04.2026 - v5.5.1.8  Fix DLNA Player Elapsed/Duration & Add Parameter showOnlyPlayerHeadline
+		- 25.05.2026 - v5.5.1.9  Final Fix SqueezeboxRPC-Player
 
 		
 ***************************************************************************************************************
@@ -1008,7 +1010,7 @@ export const config: Config = {
 // _________________________________ DE: Ab hier keine Konfiguration mehr _____________________________________
 // _________________________________ EN:  No more configuration from here _____________________________________
 
-const scriptVersion: string = 'v5.1.1.7';
+const scriptVersion: string = 'v5.1.1.8';
 const tft_version: string = 'v5.1.1';
 const desired_display_firmware_version = 61;
 const berry_driver_version = 10;
@@ -7649,11 +7651,21 @@ function GenerateMediaPage (page: NSPanel.PageMedia): NSPanel.Payload[] {
         }
 
         if (existsObject(id)) {
-            let name = getState(id + '.ALBUM').val;
+
+            let name = "";
+            if (page.items[0].showOnlyPlayerHeadline && page.items[0].showOnlyPlayerHeadline != undefined) {
+                //name = getState(page.items[0].adapterPlayerInstance + "Players.SqueezePlay.Playername").val;
+                name = getState(page.items[0].adapterPlayerInstance + "Players." + page.items[0].mediaDevice + ".Playername").val;
+                //name = page.heading;
+            } else {
+                name = getState(id + '.ALBUM').val;
+                console.log("##### else name");
+            }
             let title = getState(id + '.TITLE').val;
             if (title && title.indexOf('~') !== -1) {
                 title = title.split('~')[0].trim();
             }
+
             if (title.length > 24) {
                 title = title.slice(0, 24) + '...';
             }
@@ -7663,6 +7675,7 @@ function GenerateMediaPage (page: NSPanel.PageMedia): NSPanel.Payload[] {
                     let Seconds = parseInt(getState(id + '.DURATION').val) % 60 < 10 ? '0' : '';
                     let Duration = Math.floor(getState(id + '.DURATION').val / 60) + ':' + Seconds + (getState(id + '.DURATION').val % 60);
                     let vElapsed = getState(id + '.ELAPSED').val;
+
                     if (vElapsed.length == 5) {
                         if (parseInt(vElapsed.slice(0, 2)) < 9) {
                             vElapsed = vElapsed.slice(1);
@@ -7723,12 +7736,17 @@ function GenerateMediaPage (page: NSPanel.PageMedia): NSPanel.Payload[] {
 
             let author = getState(id + '.ARTIST').val;
 
-            if (v2Adapter == 'squeezeboxrpc' && author.length == 0) {
+            if (v2Adapter == 'squeezeboxrpc' && author.length > 0) {
                 if (existsObject([page.items[0].adapterPlayerInstance, 'Players.', page.items[0].mediaDevice, '.Playlist'].join(''))) {
                     if (existsObject([page.items[0].adapterPlayerInstance, 'Players.', page.items[0].mediaDevice, '.Playlist'].join(''))) {
                         let lmstracklist = JSON.parse(getState([page.items[0].adapterPlayerInstance, 'Players.', page.items[0].mediaDevice, '.Playlist'].join('')).val);
                         let currentIndex: number = parseInt(getState([page.items[0].adapterPlayerInstance, 'Players.', page.items[0].mediaDevice, '.PlaylistCurrentIndex'].join('')).val);
-                        author = lmstracklist[currentIndex].Artist + '|' + lmstracklist[currentIndex].Album;
+                        
+                        author = lmstracklist[currentIndex].Artist;
+                        if (author == undefined || author == "undefined") {
+                            author = getState(id + '.ARTIST').val;
+                        } 
+                        author = author + '|' + lmstracklist[currentIndex].Album;
                         if (author.length > 37) {
                             author = author.slice(0, 37) + '...';
                         }
@@ -7870,7 +7888,7 @@ function GenerateMediaPage (page: NSPanel.PageMedia): NSPanel.Payload[] {
                         media_icon = Icons.GetIcon(page.items[0].playerMediaIcon);
                     }
                 }
-                if (name.length == 0) {
+                if (typeof name !== 'string' || name.length == 0) {
                     name = page.heading;
                 } else if (name.length > 16) {
                     name = name.slice(0, 16) + '...';
@@ -15368,6 +15386,7 @@ namespace NSPanel {
         hiddenByTrigger?: boolean;
         thermoItems?: any;
         alwaysOnDisplay?: boolean;
+        showOnlyPlayerHeadline?: boolean;
     };
 
     export type PagetypeType = 'cardChart' | 'cardLChart' | 'cardEntities' | 'cardSchedule' | 'cardGrid' | 'cardGrid2' | 'cardGrid3' | 'cardThermo' | 'cardThermo2' | 'cardMedia' | 'cardUnlock' | 'cardQR' | 'cardAlarm' | 'cardPower'; //| 'cardBurnRec'
@@ -15549,6 +15568,7 @@ namespace NSPanel {
         fontSize?: number;
         actionStringArray?: string[];
         alwaysOnDisplay?: boolean;
+        showOnlyPlayerHeadline?: boolean;
         popupVersion?: number;
         shutterType?: string;
         shutterZeroIsClosed?: boolean;
