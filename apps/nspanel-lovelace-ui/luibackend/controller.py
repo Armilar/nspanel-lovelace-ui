@@ -402,7 +402,7 @@ class LuiController(object):
         if button_type == "opnSensorNotify":
             msg = ""
             entity = apis.ha_api.get_entity(entity_id)
-            if open_sensors := entity.attributes.get("open_sensors") is not None:
+            if (open_sensors := entity.attributes.get("open_sensors")) is not None:
                 for e in open_sensors:
                     msg += f"- {apis.ha_api.get_entity(e).attributes['friendly_name']}\r\n"
             self._pages_gen.send_message_page("opnSensorNotifyRes", "", msg, "", "")
