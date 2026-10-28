@@ -10,10 +10,6 @@ pageIcons
 	7    Component(s)
 	0    Line(s) of event code
 	0    Unique line(s) of event code
-pageStartup
-	20   Component(s)
-	202  Line(s) of event code
-	139  Unique line(s) of event code
 cardChart
 	33   Component(s)
 	451  Line(s) of event code
@@ -26,6 +22,10 @@ popupTimer
 	42   Component(s)
 	516  Line(s) of event code
 	257  Unique line(s) of event code
+pageStartup
+	20   Component(s)
+	202  Line(s) of event code
+	139  Unique line(s) of event code
 popupInSel
 	34   Component(s)
 	621  Line(s) of event code

@@ -42,6 +42,10 @@ screensaver3
 	34   Component(s)
 	346  Line(s) of event code
 	227  Unique line(s) of event code
+pageStartup
+	19   Component(s)
+	202  Line(s) of event code
+	139  Unique line(s) of event code
 popupShutter
 	25   Component(s)
 	402  Line(s) of event code
@@ -62,10 +66,6 @@ cardAlarm
 	43   Component(s)
 	504  Line(s) of event code
 	275  Unique line(s) of event code
-pageStartup
-	19   Component(s)
-	202  Line(s) of event code
-	139  Unique line(s) of event code
 cardQR
 	34   Component(s)
 	414  Line(s) of event code
